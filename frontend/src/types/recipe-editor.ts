@@ -24,7 +24,7 @@ export interface StepConfig {
   audio_config?: Record<string, unknown>;
 }
 
-export interface RecipeNodeData {
+export interface RecipeNodeData extends Record<string, unknown> {
   stepId: string;
   name: string;
   config: StepConfig;
