@@ -43,6 +43,7 @@ def create_app() -> FastAPI:
 
     # Register routers
     from app.agents.router import router as agents_router
+    from app.analytics.router import router as analytics_router
     from app.auth.router import router as auth_router
     from app.executions.router import router as executions_router
     from app.recipes.router import router as recipes_router
@@ -53,6 +54,7 @@ def create_app() -> FastAPI:
     app.include_router(agents_router)
     app.include_router(executions_router)
     app.include_router(usage_router)
+    app.include_router(analytics_router)
 
     return app
 

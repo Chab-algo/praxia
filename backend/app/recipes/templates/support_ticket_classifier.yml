@@ -1,0 +1,83 @@
+slug: support-ticket-classifier
+name: Support Ticket Classifier
+description: "Classifies support tickets by priority, category, and suggests initial responses"
+category: support
+version: "1.0.0"
+icon: headphones
+
+estimated_cost_per_run: 0.0004
+
+input_schema:
+  type: object
+  required:
+    - ticket_text
+  properties:
+    ticket_text:
+      type: string
+      description: "The support ticket content"
+    customer_tier:
+      type: string
+      enum: [standard, premium, enterprise]
+      default: standard
+    product_name:
+      type: string
+      description: "Product the ticket relates to"
+
+output_schema:
+  type: object
+  properties:
+    priority:
+      type: string
+      enum: [low, medium, high, urgent]
+    category:
+      type: string
+    sentiment:
+      type: string
+    suggested_response:
+      type: string
+    requires_escalation:
+      type: boolean
+
+steps:
+  - id: classify_ticket
+    name: "Classify Ticket"
+    type: llm_call
+    complexity: classify
+    system_prompt: |
+      You are a support ticket classification system. Analyze the ticket and respond with JSON:
+      {"priority": "low"|"medium"|"high"|"urgent", "category": "...", "sentiment": "positive"|"neutral"|"negative"|"angry", "requires_escalation": true|false, "key_issues": ["..."]}
+      Categories: billing, technical, feature_request, bug_report, account, general
+      Escalation criteria: angry sentiment, urgent priority, or enterprise customer_tier with high priority.
+    user_prompt: "Ticket: {{ticket_text}}\nCustomer tier: {{customer_tier}}\nProduct: {{product_name}}"
+    max_tokens: 150
+    temperature: 0.1
+    response_format: json_object
+    cacheable: true
+
+  - id: generate_response
+    name: "Generate Suggested Response"
+    type: llm_call
+    complexity: generate_short
+    system_prompt: |
+      You are a professional support agent. Write a brief, helpful initial response
+      to this {{steps.classify_ticket.output.priority}} priority {{steps.classify_ticket.output.category}} ticket.
+      Be empathetic and solution-oriented. 2-3 sentences max.
+    user_prompt: "Ticket: {{ticket_text}}"
+    max_tokens: 200
+    temperature: 0.3
+    cacheable: false
+
+  - id: format_output
+    name: "Format Output"
+    type: transform
+    mapping:
+      priority: "{{steps.classify_ticket.output.priority}}"
+      category: "{{steps.classify_ticket.output.category}}"
+      sentiment: "{{steps.classify_ticket.output.sentiment}}"
+      suggested_response: "{{steps.generate_response.output}}"
+      requires_escalation: "{{steps.classify_ticket.output.requires_escalation}}"
+
+roi_metrics:
+  time_saved: "12h/week"
+  cost_saved: "Based on avg 5min per manual ticket triage"
+  use_case: "Automated support ticket classification and response"

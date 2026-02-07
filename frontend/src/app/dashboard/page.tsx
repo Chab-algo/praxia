@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { listAgents, listExecutions, getBudgetStatus, listRecipes } from "@/lib/api";
+import { CardSkeleton, Skeleton } from "@/components/skeleton";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { getToken, isLoaded } = useAuth();
   const [stats, setStats] = useState({
     agents: 0,
@@ -17,6 +20,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isLoaded) return;
+
+    // Check onboarding
+    if (typeof window !== "undefined" && !localStorage.getItem("praxia_onboarded")) {
+      router.push("/dashboard/onboarding");
+      return;
+    }
+
     const load = async () => {
       try {
         const token = await getToken();
@@ -45,8 +55,14 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div>
+        <Skeleton className="h-8 w-48 mb-6" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       </div>
     );
   }

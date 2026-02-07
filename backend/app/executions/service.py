@@ -115,6 +115,7 @@ async def run_execution(
             db.add(step)
 
         await db.flush()
+        await _update_usage_daily(db, execution)
         logger.info(
             "execution_completed",
             execution_id=str(execution.id),
@@ -126,6 +127,7 @@ async def run_execution(
         execution.error_data = {"error": str(e), "type": type(e).__name__}
         execution.completed_at = datetime.utcnow()
         await db.flush()
+        await _update_usage_daily(db, execution)
         logger.error("execution_failed", execution_id=str(execution.id), error=str(e))
         raise
 
@@ -152,3 +154,55 @@ async def list_executions(
         .limit(limit)
     )
     return list(result.all())
+
+
+async def _update_usage_daily(db: AsyncSession, execution: Execution) -> None:
+    """Upsert usage_daily record for this execution's org + date."""
+    from app.usage.models import UsageDaily
+
+    exec_date = (execution.completed_at or execution.created_at).date()
+    is_success = execution.status == "completed"
+    is_failed = execution.status == "failed"
+
+    # Determine model tier counts from models_used
+    models = execution.models_used or []
+    nano = sum(1 for m in models if "nano" in m)
+    mini = sum(1 for m in models if "mini" in m)
+    full = sum(1 for m in models if m == "gpt-4.1")
+
+    existing = await db.scalar(
+        select(UsageDaily).where(
+            UsageDaily.organization_id == execution.organization_id,
+            UsageDaily.date == exec_date,
+        )
+    )
+
+    if existing:
+        existing.total_executions += 1
+        existing.successful_executions += int(is_success)
+        existing.failed_executions += int(is_failed)
+        existing.total_input_tokens += execution.total_input_tokens
+        existing.total_output_tokens += execution.total_output_tokens
+        existing.total_cost_cents += execution.total_cost_cents
+        existing.nano_calls += nano
+        existing.mini_calls += mini
+        existing.full_calls += full
+        existing.cache_hits += execution.cache_hits
+    else:
+        record = UsageDaily(
+            organization_id=execution.organization_id,
+            date=exec_date,
+            total_executions=1,
+            successful_executions=int(is_success),
+            failed_executions=int(is_failed),
+            total_input_tokens=execution.total_input_tokens,
+            total_output_tokens=execution.total_output_tokens,
+            total_cost_cents=execution.total_cost_cents,
+            nano_calls=nano,
+            mini_calls=mini,
+            full_calls=full,
+            cache_hits=execution.cache_hits,
+        )
+        db.add(record)
+
+    await db.flush()

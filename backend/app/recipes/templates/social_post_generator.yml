@@ -1,0 +1,71 @@
+slug: social-post-generator
+name: Social Post Generator
+description: "Generates engaging social media posts from product/service descriptions"
+category: marketing
+version: "1.0.0"
+icon: megaphone
+
+estimated_cost_per_run: 0.0005
+
+input_schema:
+  type: object
+  required:
+    - product_description
+    - platform
+  properties:
+    product_description:
+      type: string
+      description: "Description of the product or service to promote"
+    platform:
+      type: string
+      enum: [linkedin, instagram, twitter, facebook]
+      default: linkedin
+    tone:
+      type: string
+      enum: [professional, casual, enthusiastic, informative]
+      default: professional
+    language:
+      type: string
+      enum: [fr, en]
+      default: fr
+
+output_schema:
+  type: object
+  properties:
+    post_text:
+      type: string
+    hashtags:
+      type: array
+      items:
+        type: string
+    call_to_action:
+      type: string
+
+steps:
+  - id: generate_post
+    name: "Generate Social Post"
+    type: llm_call
+    complexity: generate_short
+    system_prompt: |
+      You are a social media marketing expert. Generate an engaging {{platform}} post
+      in {{language}} language with a {{tone}} tone.
+      Respond with JSON: {"post_text": "...", "hashtags": ["..."], "call_to_action": "..."}
+      Keep the post appropriate for the platform's character limits and conventions.
+    user_prompt: "Product/Service: {{product_description}}"
+    max_tokens: 300
+    temperature: 0.6
+    response_format: json_object
+    cacheable: false
+
+  - id: format_output
+    name: "Format Output"
+    type: transform
+    mapping:
+      post_text: "{{steps.generate_post.output.post_text}}"
+      hashtags: "{{steps.generate_post.output.hashtags}}"
+      call_to_action: "{{steps.generate_post.output.call_to_action}}"
+
+roi_metrics:
+  time_saved: "8h/week"
+  cost_saved: "Based on avg 20min per manual post creation"
+  use_case: "Automated social media content generation"

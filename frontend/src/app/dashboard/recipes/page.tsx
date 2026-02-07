@@ -18,6 +18,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   hr: "bg-green-100 text-green-800",
   finance: "bg-purple-100 text-purple-800",
   marketing: "bg-orange-100 text-orange-800",
+  support: "bg-teal-100 text-teal-800",
 };
 
 export default function RecipesPage() {

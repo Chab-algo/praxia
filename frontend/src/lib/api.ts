@@ -75,3 +75,22 @@ export async function getBudgetStatus(token: string) {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+// Analytics
+export async function getAnalyticsOverview(token: string) {
+  return fetchAPI("/api/analytics/overview", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function getAnalyticsAgents(token: string) {
+  return fetchAPI("/api/analytics/agents", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function getAnalyticsTimeline(token: string, days: number = 30) {
+  return fetchAPI(`/api/analytics/timeline?days=${days}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
