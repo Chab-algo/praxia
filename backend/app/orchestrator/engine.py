@@ -141,7 +141,7 @@ class OrchestrationEngine:
         if output_mapping:
             result.output = {}
             for key, template in output_mapping.items():
-                result.output[key] = prompt_builder.render_template(template, variables)
+                result.output[key] = prompt_builder.render_value(template, variables)
         elif steps:
             last_step_id = steps[-1]["id"]
             result.output = step_outputs.get(last_step_id, {}).get("output", {})
@@ -426,5 +426,5 @@ class OrchestrationEngine:
         mapping = step.get("mapping", {})
         output = {}
         for key, template in mapping.items():
-            output[key] = prompt_builder.render_template(str(template), variables)
+            output[key] = prompt_builder.render_value(template, variables)
         return output
