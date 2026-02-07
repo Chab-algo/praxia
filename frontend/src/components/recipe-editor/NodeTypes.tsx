@@ -2,7 +2,7 @@
 
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Brain, ArrowRightLeft, Mic } from 'lucide-react';
-import { RecipeNodeData } from '@/types/recipe-editor';
+import { RecipeNode, RecipeNodeData } from '@/types/recipe-editor';
 
 const nodeStyles = {
   llm_call: {
@@ -25,7 +25,7 @@ const nodeStyles = {
   },
 };
 
-export function LLMCallNode({ data, selected }: NodeProps<RecipeNodeData>) {
+export function LLMCallNode({ data, selected }: NodeProps<RecipeNode, 'llm_call'>) {
   const styles = nodeStyles.llm_call;
   const modelInfo = data.config.complexity ? `(${data.config.complexity})` : '';
 
@@ -58,7 +58,7 @@ export function LLMCallNode({ data, selected }: NodeProps<RecipeNodeData>) {
   );
 }
 
-export function TransformNode({ data, selected }: NodeProps<RecipeNodeData>) {
+export function TransformNode({ data, selected }: NodeProps<RecipeNode, 'transform'>) {
   const styles = nodeStyles.transform;
   const mappingCount = data.config.mapping
     ? Object.keys(data.config.mapping as Record<string, unknown>).length
@@ -93,7 +93,7 @@ export function TransformNode({ data, selected }: NodeProps<RecipeNodeData>) {
   );
 }
 
-export function AudioNode({ data, selected }: NodeProps<RecipeNodeData>) {
+export function AudioNode({ data, selected }: NodeProps<RecipeNode, 'audio'>) {
   const styles = nodeStyles.audio;
   const operation = data.config.operation || 'process';
 
