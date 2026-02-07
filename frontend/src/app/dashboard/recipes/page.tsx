@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { listRecipes, listMyRecipes } from "@/lib/api";
@@ -34,7 +34,7 @@ interface MyRecipe {
   created_at: string;
 }
 
-export default function RecipesPage() {
+function RecipesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getToken, isLoaded } = useAuth();
@@ -272,5 +272,19 @@ export default function RecipesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RecipesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      }
+    >
+      <RecipesPageContent />
+    </Suspense>
   );
 }
