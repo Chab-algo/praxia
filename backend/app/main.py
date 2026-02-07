@@ -50,12 +50,12 @@ def create_app() -> FastAPI:
         return {"status": "ok", "version": "0.1.0"}
 
     # Ensure all models are imported so SQLAlchemy metadata is complete
-    import app.auth.models  # noqa: F401
-    import app.organizations.models  # noqa: F401
-    import app.recipes.models  # noqa: F401
-    import app.agents.models  # noqa: F401
-    import app.executions.models  # noqa: F401
-    import app.usage.models  # noqa: F401
+    from app.auth import models as _auth_models  # noqa: F401
+    from app.organizations import models as _org_models  # noqa: F401
+    from app.recipes import models as _recipe_models  # noqa: F401
+    from app.agents import models as _agent_models  # noqa: F401
+    from app.executions import models as _exec_models  # noqa: F401
+    from app.usage import models as _usage_models  # noqa: F401
 
     # Register routers
     from app.agents.router import router as agents_router
