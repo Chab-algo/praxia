@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from decimal import Decimal
 
 import structlog
 from redis.asyncio import Redis
@@ -98,7 +99,7 @@ async def run_execution(
         execution.output_data = result.output
         execution.total_input_tokens = result.total_input_tokens
         execution.total_output_tokens = result.total_output_tokens
-        execution.total_cost_cents = round(result.total_cost_usd * 100, 4)
+        execution.total_cost_cents = Decimal(str(round(result.total_cost_usd * 100, 4)))
         execution.cache_hits = result.cache_hits
         execution.models_used = list(result.models_used) if isinstance(result.models_used, set) else result.models_used
         execution.completed_at = datetime.utcnow()
