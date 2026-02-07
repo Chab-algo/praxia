@@ -2,7 +2,7 @@ import { Node, Edge } from '@xyflow/react';
 
 export type StepType = 'llm_call' | 'transform' | 'audio';
 
-export interface StepConfig {
+export interface StepConfig extends Record<string, unknown> {
   // Common fields
   name: string;
   
