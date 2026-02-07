@@ -117,3 +117,29 @@ async def get_custom_recipe(
         select(Recipe).where(Recipe.id == recipe_id, Recipe.created_by == user_id)
     )
     return recipe
+
+
+async def get_custom_recipe_by_slug(
+    db: AsyncSession,
+    slug: str,
+    user_id: uuid.UUID | None = None,
+) -> Recipe | None:
+    """
+    Récupère une recipe personnalisée par slug.
+
+    Args:
+        db: Session de base de données
+        slug: Slug de la recipe
+        user_id: ID de l'utilisateur (optionnel, pour vérifier l'accès)
+
+    Returns:
+        Recipe | None: Recipe trouvée ou None
+    """
+    query = select(Recipe).where(Recipe.slug == slug, Recipe.is_custom == True)
+    
+    if user_id:
+        # If user_id provided, only return recipes created by that user
+        query = query.where(Recipe.created_by == user_id)
+    
+    recipe = await db.scalar(query)
+    return recipe

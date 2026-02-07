@@ -58,23 +58,57 @@ async def list_my_recipes(
 
 
 @router.get("/{slug}", response_model=RecipeDetail)
-async def get_recipe(slug: str):
-    recipe = registry.get_recipe(slug)
-    if not recipe:
-        raise HTTPException(status_code=404, detail=f"Recipe '{slug}' not found")
-    return RecipeDetail(
-        slug=recipe["slug"],
-        name=recipe["name"],
-        description=recipe.get("description", ""),
-        category=recipe["category"],
-        version=recipe.get("version", "1.0.0"),
-        icon=recipe.get("icon"),
-        estimated_cost_per_run=recipe.get("estimated_cost_per_run"),
-        roi_metrics=recipe.get("roi_metrics", {}),
-        input_schema=recipe.get("input_schema", {}),
-        output_schema=recipe.get("output_schema", {}),
-        steps=recipe.get("steps", []),
+async def get_recipe(
+    slug: str,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Récupère une recipe par slug (publique ou personnalisée)."""
+    # First try to get from registry (public recipes)
+    recipe_dict = registry.get_recipe(slug)
+    
+    if recipe_dict:
+        # Found in registry, return it
+        return RecipeDetail(
+            slug=recipe_dict["slug"],
+            name=recipe_dict["name"],
+            description=recipe_dict.get("description", ""),
+            category=recipe_dict["category"],
+            version=recipe_dict.get("version", "1.0.0"),
+            icon=recipe_dict.get("icon"),
+            estimated_cost_per_run=recipe_dict.get("estimated_cost_per_run"),
+            roi_metrics=recipe_dict.get("roi_metrics", {}),
+            input_schema=recipe_dict.get("input_schema", {}),
+            output_schema=recipe_dict.get("output_schema", {}),
+            steps=recipe_dict.get("steps", []),
+        )
+    
+    # Not found in registry, try database (custom recipes)
+    recipe = await service.get_custom_recipe_by_slug(
+        db=db,
+        slug=slug,
+        user_id=user.id,
     )
+    
+    if recipe:
+        # Convert database recipe to RecipeDetail format
+        config = recipe.config
+        return RecipeDetail(
+            slug=recipe.slug,
+            name=recipe.name,
+            description=recipe.description or "",
+            category=recipe.category,
+            version=recipe.version,
+            icon=recipe.icon,
+            estimated_cost_per_run=float(recipe.estimated_cost_per_run) if recipe.estimated_cost_per_run else None,
+            roi_metrics=config.get("roi_metrics", {}),
+            input_schema=config.get("input_schema", {}),
+            output_schema=config.get("output_schema", {}),
+            steps=config.get("steps", []),
+        )
+    
+    # Not found anywhere
+    raise HTTPException(status_code=404, detail=f"Recipe '{slug}' not found")
 
 
 @router.post("/builder/generate", response_model=RecipeGenerationResponse)
