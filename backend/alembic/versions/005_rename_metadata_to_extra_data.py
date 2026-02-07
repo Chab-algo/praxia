@@ -1,6 +1,6 @@
 """Rename metadata column to extra_data (metadata is reserved in SQLAlchemy)
 
-Revision ID: 005_rename_metadata_to_extra_data
+Revision ID: 005_rename_metadata
 Revises: 004_add_crm_tables
 Create Date: 2026-02-07 18:00:00.000000
 
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = "005_rename_metadata_to_extra_data"
+revision = "005_rename_metadata"
 down_revision = "004_add_crm_tables"
 branch_labels = None
 depends_on = None
