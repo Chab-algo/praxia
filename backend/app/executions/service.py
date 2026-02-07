@@ -11,6 +11,7 @@ from app.agents.models import Agent
 from app.executions.models import Execution, ExecutionStep
 from app.orchestrator.engine import OrchestrationEngine
 from app.recipes import registry
+from app.recipes import service as recipe_service
 
 logger = structlog.get_logger()
 
@@ -56,9 +57,22 @@ async def run_execution(
     recipe_slug = agent.recipe_slug
     if not recipe_slug:
         raise ValueError(f"Agent {agent.id} has no recipe_slug configured")
+    
+    # First try to get from registry (public recipes)
     recipe = registry.get_recipe(recipe_slug)
+    
+    # If not found in registry, try database (custom recipes)
     if not recipe:
-        raise ValueError(f"Recipe '{recipe_slug}' not found")
+        recipe_db = await recipe_service.get_custom_recipe_by_slug(
+            db=db,
+            slug=recipe_slug,
+            user_id=execution.user_id,
+        )
+        if recipe_db:
+            # Convert database recipe to dict format
+            recipe = recipe_db.config
+        else:
+            raise ValueError(f"Recipe '{recipe_slug}' not found")
 
     # Default plan for user-scoped execution
     org_plan = "trial"

@@ -1,0 +1,128 @@
+slug: color-tone-tester
+name: Color Tone Tester
+description: "Outil pour tester et comparer plusieurs tonalités de couleur sur un site web afin d'optimiser l'apparence visuelle"
+category: marketing
+version: "1.0.0"
+icon: palette
+
+estimated_cost_per_run: 0.001
+
+input_schema:
+  type: object
+  required:
+    - site_url
+    - base_colors
+    - target_elements
+  properties:
+    site_url:
+      type: string
+      description: "URL du site web à analyser"
+      default: "https://www.a37.ai/"
+    base_colors:
+      type: array
+      description: "Liste des codes couleurs hexadécimaux de base à tester"
+      items:
+        type: string
+      default: []
+    target_elements:
+      type: array
+      description: "Sélecteurs CSS des éléments du site à appliquer les couleurs"
+      items:
+        type: string
+      default: []
+
+output_schema:
+  type: object
+  properties:
+    color_analysis:
+      type: array
+      items:
+        type: object
+        properties:
+          color:
+            type: string
+          element:
+            type: string
+          recommendation:
+            type: string
+          visual_harmony_score:
+            type: number
+    best_combinations:
+      type: array
+      items:
+        type: object
+        properties:
+          colors:
+            type: array
+            items:
+              type: string
+          elements:
+            type: array
+            items:
+              type: string
+          score:
+            type: number
+          reasoning:
+            type: string
+    summary:
+      type: string
+
+steps:
+  - id: analyze_colors
+    name: "Analyze Color Combinations"
+    type: llm_call
+    complexity: analyze
+    system_prompt: |
+      You are a UI/UX color expert. Analyze color combinations for a website.
+      Given a website URL, base colors (hex codes), and CSS selectors for target elements,
+      provide recommendations on which color tones work best together.
+      
+      Consider:
+      - Visual harmony and contrast
+      - Accessibility (WCAG guidelines)
+      - Brand consistency
+      - User experience impact
+      
+      Respond with JSON containing:
+      {
+        "color_analysis": [
+          {
+            "color": "#hexcode",
+            "element": "css_selector",
+            "recommendation": "why this works/doesn't work",
+            "visual_harmony_score": 0-100
+          }
+        ],
+        "best_combinations": [
+          {
+            "colors": ["#hex1", "#hex2"],
+            "elements": ["selector1", "selector2"],
+            "score": 0-100,
+            "reasoning": "explanation"
+          }
+        ],
+        "summary": "overall recommendation"
+      }
+    user_prompt: |
+      Website URL: {{site_url}}
+      Base colors to test: {{base_colors}}
+      Target CSS elements: {{target_elements}}
+      
+      Analyze these color combinations and provide recommendations.
+    max_tokens: 800
+    temperature: 0.3
+    response_format: json_object
+    cacheable: false
+
+  - id: format_output
+    name: "Format Output"
+    type: transform
+    mapping:
+      color_analysis: "{{steps.analyze_colors.output.color_analysis}}"
+      best_combinations: "{{steps.analyze_colors.output.best_combinations}}"
+      summary: "{{steps.analyze_colors.output.summary}}"
+
+roi_metrics:
+  time_saved: "4h/week"
+  cost_saved: "Based on avg 30min per manual color testing"
+  use_case: "Automated color palette optimization for websites"
