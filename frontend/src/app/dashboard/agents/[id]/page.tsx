@@ -46,7 +46,8 @@ export default function AgentDetailPage() {
 
         if (agentData.recipe_slug) {
           try {
-            const recipeData = await getRecipe(agentData.recipe_slug);
+            const token = await getToken();
+            const recipeData = await getRecipe(agentData.recipe_slug, token || undefined);
             setRecipe(recipeData);
 
             if (recipeData.input_schema?.properties) {
