@@ -32,6 +32,9 @@ export interface RecipeNodeData extends Record<string, unknown> {
 }
 
 export type RecipeNode = Node<RecipeNodeData>;
+export type LLMCallNode = Node<RecipeNodeData, 'llm_call'>;
+export type TransformNode = Node<RecipeNodeData, 'transform'>;
+export type AudioNode = Node<RecipeNodeData, 'audio'>;
 export type RecipeEdge = Edge;
 
 export interface VisualRecipe {
