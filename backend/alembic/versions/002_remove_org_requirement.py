@@ -17,6 +17,10 @@ depends_on = None
 def upgrade() -> None:
     # --- agents: make organization_id nullable, make created_by NOT NULL with index ---
     op.alter_column("agents", "organization_id", existing_type=sa.Uuid(), nullable=True)
+
+    # Delete orphan agents that have no created_by (can't assign an owner)
+    op.execute("DELETE FROM agents WHERE created_by IS NULL")
+
     op.alter_column("agents", "created_by", existing_type=sa.Uuid(), nullable=False)
     op.create_index(op.f("ix_agents_created_by"), "agents", ["created_by"])
 
@@ -37,7 +41,11 @@ def upgrade() -> None:
         "UPDATE executions SET user_id = triggered_by_user_id WHERE user_id IS NULL AND triggered_by_user_id IS NOT NULL"
     )
 
-    # Make user_id NOT NULL after backfill
+    # Delete orphan executions that still have no user_id
+    op.execute("DELETE FROM execution_steps WHERE execution_id IN (SELECT id FROM executions WHERE user_id IS NULL)")
+    op.execute("DELETE FROM executions WHERE user_id IS NULL")
+
+    # Make user_id NOT NULL after cleanup
     op.alter_column("executions", "user_id", existing_type=sa.Uuid(), nullable=False)
 
     # --- usage_daily: make organization_id nullable, add user_id column ---
