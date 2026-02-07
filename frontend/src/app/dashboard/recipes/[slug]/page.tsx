@@ -25,6 +25,7 @@ export default function RecipeDetailPage() {
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const slug = params.slug as string;
 
@@ -49,17 +50,22 @@ export default function RecipeDetailPage() {
   const handleCreateAgent = async () => {
     if (!recipe) return;
     setCreating(true);
+    setError(null);
     try {
       const token = await getToken();
-      if (!token) return;
+      if (!token) {
+        setError("Vous devez être connecté pour créer un agent");
+        return;
+      }
       const agent = await createAgent(token, {
         name: recipe.name,
         recipe_slug: recipe.slug,
         description: recipe.description,
       });
       router.push(`/dashboard/agents/${agent.id}`);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Error creating agent:", err);
+      setError(err.message || "Erreur lors de la création de l'agent");
     } finally {
       setCreating(false);
     }
@@ -110,6 +116,12 @@ export default function RecipeDetailPage() {
           {creating ? "Creating..." : "Create Agent"}
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200">
+          {error}
+        </div>
+      )}
 
       {/* ROI Metrics */}
       {recipe.roi_metrics && Object.keys(recipe.roi_metrics).length > 0 && (
