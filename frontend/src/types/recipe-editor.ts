@@ -3,9 +3,6 @@ import { Node, Edge } from '@xyflow/react';
 export type StepType = 'llm_call' | 'transform' | 'audio';
 
 export interface StepConfig extends Record<string, unknown> {
-  // Common fields
-  name: string;
-  
   // LLM Call specific
   system_prompt?: string;
   user_prompt?: string;
