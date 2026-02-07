@@ -5,14 +5,17 @@ WORKDIR /app
 # Install UV
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy dependency files
+# Copy dependency files first (for caching)
 COPY pyproject.toml uv.lock* ./
 
-# Install dependencies
+# Install dependencies only (cached layer)
 RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy application code
 COPY . .
+
+# Install the project itself so 'app' is importable
+RUN uv sync --frozen --no-dev
 
 # Expose port
 EXPOSE 8000
