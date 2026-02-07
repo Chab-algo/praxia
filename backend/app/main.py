@@ -28,9 +28,17 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    origins = [
+        settings.frontend_url,
+        "http://localhost:3000",
+    ]
+    # Remove empty strings and duplicates
+    origins = list(set(o for o in origins if o))
+    logger.info("cors_origins", origins=origins)
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.frontend_url, "http://localhost:3000"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
