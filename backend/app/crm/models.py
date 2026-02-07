@@ -51,7 +51,7 @@ class Lead(Base, UUIDMixin, TimestampMixin):
 
     # Metadata
     notes: Mapped[str | None] = mapped_column(Text)
-    metadata: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
+    extra_data: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
 
     # Assignment
     assigned_to: Mapped[uuid.UUID | None] = mapped_column(
@@ -108,4 +108,4 @@ class Opportunity(Base, UUIDMixin, TimestampMixin):
 
     # Metadata
     notes: Mapped[str | None] = mapped_column(Text)
-    metadata: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
+    extra_data: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
