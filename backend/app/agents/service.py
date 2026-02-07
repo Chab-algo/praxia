@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.models import Agent
 from app.recipes import registry
+from app.recipes import service as recipe_service
+from app.recipes.models import Recipe
 
 logger = structlog.get_logger()
 
@@ -19,9 +21,21 @@ async def create_agent(
     config_overrides: dict | None = None,
     custom_prompts: dict | None = None,
 ) -> Agent:
+    # First try to get from registry (public recipes)
     recipe = registry.get_recipe(recipe_slug)
+    
+    # If not found in registry, try database (custom recipes)
     if not recipe:
-        raise ValueError(f"Recipe '{recipe_slug}' not found")
+        recipe_db = await recipe_service.get_custom_recipe_by_slug(
+            db=db,
+            slug=recipe_slug,
+            user_id=user_id,
+        )
+        if recipe_db:
+            # Convert database recipe to dict format
+            recipe = recipe_db.config
+        else:
+            raise ValueError(f"Recipe '{recipe_slug}' not found")
 
     agent = Agent(
         recipe_slug=recipe_slug,
