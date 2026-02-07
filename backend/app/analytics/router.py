@@ -22,9 +22,9 @@ async def get_overview(
 
 @router.get("/trends", response_model=list[TrendItem])
 async def get_trends(
-    days: int = Query(30, ge=1, le=365),
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    days: int = Query(30, ge=1, le=365),
 ):
     """Obtenir les tendances d'utilisation."""
     return await service.get_trends(db, user.id, days=days)

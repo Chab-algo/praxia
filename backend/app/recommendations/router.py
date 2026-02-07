@@ -14,9 +14,9 @@ router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
 
 @router.get("/recipes")
 async def get_recipe_recommendations(
-    domain: Optional[str] = Query(None),
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    domain: Optional[str] = Query(None),
 ):
     """Obtenir des recommandations de recipes."""
     recommendations = await service.get_recipe_recommendations(
@@ -29,9 +29,9 @@ async def get_recipe_recommendations(
 
 @router.get("/optimizations")
 async def get_optimization_recommendations(
-    agent_id: uuid.UUID = Query(...),
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    agent_id: uuid.UUID = Query(...),
 ):
     """Obtenir des recommandations d'optimisation pour un agent."""
     # Verify agent belongs to user
