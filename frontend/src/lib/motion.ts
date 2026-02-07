@@ -6,7 +6,10 @@ export const motionDurations = {
   slow: 0.32,
 };
 
-export const motionEase = {
+export const motionEase: Record<
+  "easeOut" | "easeIn" | "easeInOut",
+  [number, number, number, number]
+> = {
   easeOut: [0.16, 1, 0.3, 1],
   easeIn: [0.7, 0, 0.84, 0],
   easeInOut: [0.4, 0, 0.2, 1],
