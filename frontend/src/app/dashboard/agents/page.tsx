@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { listAgents } from "@/lib/api";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 interface Agent {
   id: string;
@@ -22,6 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AgentsPage() {
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -76,12 +79,19 @@ export default function AgentsPage() {
           </a>
         </div>
       ) : (
-        <div className="space-y-3">
+        <motion.div
+          className="space-y-3"
+          variants={staggerContainer}
+          initial={shouldReduceMotion ? false : "initial"}
+          animate={shouldReduceMotion ? false : "animate"}
+        >
           {agents.map((agent) => (
-            <a
+            <motion.a
               key={agent.id}
               href={`/dashboard/agents/${agent.id}`}
               className="block rounded-lg border p-4 hover:border-primary hover:shadow-sm transition-all"
+              variants={fadeUp}
+              {...(shouldReduceMotion ? {} : cardHover)}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -111,9 +121,9 @@ export default function AgentsPage() {
                   {agent.status}
                 </span>
               </div>
-            </a>
+            </motion.a>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { getRecipe, createExecution } from "@/lib/api";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 interface AgentData {
   id: string;
@@ -18,6 +20,7 @@ interface AgentData {
 export default function AgentDetailPage() {
   const params = useParams();
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [agent, setAgent] = useState<AgentData | null>(null);
   const [recipe, setRecipe] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -112,7 +115,12 @@ export default function AgentDetailPage() {
   }
 
   return (
-    <div className="max-w-4xl">
+    <motion.div
+      className="max-w-4xl"
+      variants={staggerContainer}
+      initial={shouldReduceMotion ? false : "initial"}
+      animate={shouldReduceMotion ? false : "animate"}
+    >
       <div className="mb-6">
         <a
           href="/dashboard/agents"
@@ -122,7 +130,7 @@ export default function AgentDetailPage() {
         </a>
       </div>
 
-      <div className="flex items-start justify-between mb-6">
+      <motion.div className="flex items-start justify-between mb-6" variants={fadeUp}>
         <div>
           <h2 className="text-2xl font-bold">{agent.name}</h2>
           {agent.description && (
@@ -139,10 +147,10 @@ export default function AgentDetailPage() {
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Test Panel */}
-      <div className="rounded-lg border p-6 mb-6">
+      <motion.div className="rounded-lg border p-6 mb-6" variants={fadeUp}>
         <h3 className="font-semibold mb-4">Test Agent</h3>
 
         {recipe?.input_schema?.properties ? (
@@ -217,10 +225,11 @@ export default function AgentDetailPage() {
           </div>
         )}
 
-        <button
+        <motion.button
           onClick={handleTest}
           disabled={executing}
           className="rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          {...(shouldReduceMotion ? {} : cardHover)}
         >
           {executing ? (
             <span className="flex items-center gap-2">
@@ -230,63 +239,79 @@ export default function AgentDetailPage() {
           ) : (
             "Run Test"
           )}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Error */}
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6">
-          <p className="text-sm text-red-800 font-medium">Error</p>
-          <p className="text-sm text-red-600 mt-1">{error}</p>
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {error && (
+          <motion.div
+            className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6"
+            variants={fadeUp}
+            initial={shouldReduceMotion ? false : "initial"}
+            animate={shouldReduceMotion ? false : "animate"}
+            exit={shouldReduceMotion ? undefined : "exit"}
+          >
+            <p className="text-sm text-red-800 font-medium">Error</p>
+            <p className="text-sm text-red-600 mt-1">{error}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Result */}
-      {result && (
-        <div className="rounded-lg border p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Result</h3>
-            <div className="flex gap-3 text-xs text-muted-foreground">
-              <span>{result.duration_ms}ms</span>
-              <span>${(result.total_cost_cents / 100).toFixed(6)}</span>
-              <span>{result.cache_hits} cache hits</span>
-              <span>{result.models_used?.join(", ")}</span>
-            </div>
-          </div>
-
-          <div className="rounded-md bg-muted p-4 mb-4">
-            <pre className="text-sm whitespace-pre-wrap font-mono">
-              {JSON.stringify(result.output_data, null, 2)}
-            </pre>
-          </div>
-
-          {result.steps && result.steps.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Execution Steps</h4>
-              <div className="space-y-2">
-                {result.steps.map((step: any, i: number) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 rounded-md bg-muted/50 p-2 text-xs"
-                  >
-                    <span className="font-medium w-32">{step.step_name}</span>
-                    <span className="text-muted-foreground">
-                      {step.model_used || "transform"}
-                    </span>
-                    <span>{step.duration_ms}ms</span>
-                    {step.cache_hit && (
-                      <span className="text-green-600 font-medium">CACHED</span>
-                    )}
-                    <span className="ml-auto">
-                      ${(step.cost_cents / 100).toFixed(6)}
-                    </span>
-                  </div>
-                ))}
+      <AnimatePresence initial={false}>
+        {result && (
+          <motion.div
+            className="rounded-lg border p-6 mb-6"
+            variants={fadeUp}
+            initial={shouldReduceMotion ? false : "initial"}
+            animate={shouldReduceMotion ? false : "animate"}
+            exit={shouldReduceMotion ? undefined : "exit"}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Result</h3>
+              <div className="flex gap-3 text-xs text-muted-foreground">
+                <span>{result.duration_ms}ms</span>
+                <span>${(result.total_cost_cents / 100).toFixed(6)}</span>
+                <span>{result.cache_hits} cache hits</span>
+                <span>{result.models_used?.join(", ")}</span>
               </div>
             </div>
-          )}
-        </div>
-      )}
-    </div>
+
+            <div className="rounded-md bg-muted p-4 mb-4">
+              <pre className="text-sm whitespace-pre-wrap font-mono">
+                {JSON.stringify(result.output_data, null, 2)}
+              </pre>
+            </div>
+
+            {result.steps && result.steps.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">Execution Steps</h4>
+                <div className="space-y-2">
+                  {result.steps.map((step: any, i: number) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 rounded-md bg-muted/50 p-2 text-xs"
+                    >
+                      <span className="font-medium w-32">{step.step_name}</span>
+                      <span className="text-muted-foreground">
+                        {step.model_used || "transform"}
+                      </span>
+                      <span>{step.duration_ms}ms</span>
+                      {step.cache_hit && (
+                        <span className="text-green-600 font-medium">CACHED</span>
+                      )}
+                      <span className="ml-auto">
+                        ${(step.cost_cents / 100).toFixed(6)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

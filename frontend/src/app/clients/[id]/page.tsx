@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter } from "next/navigation";
 import { getClientOverview } from "@/lib/api";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 interface ClientOverview {
   organization: {
@@ -43,6 +45,7 @@ export default function ClientDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [overview, setOverview] = useState<ClientOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -86,7 +89,12 @@ export default function ClientDetailPage() {
       : "text-red-600";
 
   return (
-    <div className="container mx-auto p-6">
+    <motion.div
+      className="container mx-auto p-6"
+      variants={staggerContainer}
+      initial={shouldReduceMotion ? false : "initial"}
+      animate={shouldReduceMotion ? false : "animate"}
+    >
       <div className="mb-6">
         <button
           onClick={() => router.back()}
@@ -102,7 +110,7 @@ export default function ClientDetailPage() {
       </div>
 
       {/* Health Score */}
-      <div className="mb-6 border rounded-lg p-6">
+      <motion.div className="mb-6 border rounded-lg p-6" variants={fadeUp}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Score de Santé</h3>
           <div className={`text-4xl font-bold ${healthColor}`}>
@@ -145,20 +153,21 @@ export default function ClientDetailPage() {
             </ul>
           </div>
         )}
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Agents */}
-        <div className="border rounded-lg p-6">
+        <motion.div className="border rounded-lg p-6" variants={fadeUp}>
           <h3 className="font-semibold mb-4">Agents ({overview.agents.length})</h3>
           {overview.agents.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucun agent créé</p>
           ) : (
             <div className="space-y-2">
               {overview.agents.map((agent) => (
-                <div
+                <motion.div
                   key={agent.id}
                   className="p-3 bg-muted rounded-lg flex items-center justify-between"
+                  {...(shouldReduceMotion ? {} : cardHover)}
                 >
                   <div>
                     <div className="font-medium">{agent.name}</div>
@@ -175,14 +184,14 @@ export default function ClientDetailPage() {
                   >
                     {agent.status}
                   </span>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Executions */}
-        <div className="border rounded-lg p-6">
+        <motion.div className="border rounded-lg p-6" variants={fadeUp}>
           <h3 className="font-semibold mb-4">Exécutions</h3>
           <div className="space-y-4">
             <div>
@@ -216,8 +225,8 @@ export default function ClientDetailPage() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

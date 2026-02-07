@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { HeroSection } from './HeroSection';
 import { SocialProof } from './SocialProof';
@@ -9,6 +9,7 @@ import { OutcomesSection } from './OutcomesSection';
 import { RecipesShowcase } from './RecipesShowcase';
 import { HowItWorks } from './HowItWorks';
 import { FinalCTA } from './FinalCTA';
+import { fadeUp } from '@/lib/motion';
 
 const NAV_LINKS = [
   { href: '#outcomes', label: 'Outcomes' },
@@ -46,9 +47,15 @@ function useScrollState() {
 export function LandingPage() {
   const { scrolled, activeSection } = useScrollState();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
   return (
-    <main className="min-h-screen bg-white">
+    <motion.main
+      className="min-h-screen bg-white"
+      variants={fadeUp}
+      initial={shouldReduceMotion ? false : 'initial'}
+      animate={shouldReduceMotion ? false : 'animate'}
+    >
       {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -187,6 +194,6 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
-    </main>
+    </motion.main>
   );
 }

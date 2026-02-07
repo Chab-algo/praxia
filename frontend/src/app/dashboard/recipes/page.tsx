@@ -4,6 +4,8 @@ import { useEffect, useState, Suspense } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { listRecipes, listMyRecipes } from "@/lib/api";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 interface Recipe {
   slug: string;
@@ -38,6 +40,7 @@ function RecipesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [myRecipes, setMyRecipes] = useState<MyRecipe[]>([]);
   const [filter, setFilter] = useState<string>("all");
@@ -133,7 +136,7 @@ function RecipesPageContent() {
 
       {/* Tabs */}
       <div className="mb-6 flex gap-2 border-b">
-        <button
+        <motion.button
           onClick={() => {
             setTab("catalog");
             router.replace("/dashboard/recipes?tab=catalog", { scroll: false });
@@ -143,10 +146,11 @@ function RecipesPageContent() {
               ? "border-b-2 border-primary text-primary"
               : "text-muted-foreground hover:text-foreground"
           }`}
+          {...(shouldReduceMotion ? {} : cardHover)}
         >
           Catalogue ({recipes.length})
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           onClick={async () => {
             setTab("my");
             router.replace("/dashboard/recipes?tab=my", { scroll: false });
@@ -160,9 +164,10 @@ function RecipesPageContent() {
               ? "border-b-2 border-primary text-primary"
               : "text-muted-foreground hover:text-foreground"
           }`}
+          {...(shouldReduceMotion ? {} : cardHover)}
         >
           Mes Recipes ({myRecipes.length})
-        </button>
+        </motion.button>
       </div>
 
       {tab === "catalog" && (
@@ -170,7 +175,7 @@ function RecipesPageContent() {
           {/* Category filter */}
           <div className="flex gap-2 mb-6">
             {categories.map((cat) => (
-              <button
+              <motion.button
                 key={cat}
                 onClick={() => setFilter(cat)}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
@@ -178,19 +183,27 @@ function RecipesPageContent() {
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-accent"
                 }`}
+                {...(shouldReduceMotion ? {} : cardHover)}
               >
                 {cat === "all" ? "All" : cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
+              </motion.button>
             ))}
           </div>
 
           {/* Recipe cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            variants={staggerContainer}
+            initial={shouldReduceMotion ? false : "initial"}
+            animate={shouldReduceMotion ? false : "animate"}
+          >
             {filtered.map((recipe) => (
-              <a
+              <motion.a
                 key={recipe.slug}
                 href={`/dashboard/recipes/${recipe.slug}`}
                 className="group rounded-lg border p-6 hover:border-primary hover:shadow-md transition-all"
+                variants={fadeUp}
+                {...(shouldReduceMotion ? {} : cardHover)}
               >
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="font-semibold group-hover:text-primary">
@@ -225,9 +238,9 @@ function RecipesPageContent() {
                     </div>
                   )}
                 </div>
-              </a>
+              </motion.a>
             ))}
-          </div>
+          </motion.div>
         </>
       )}
 
@@ -244,12 +257,19 @@ function RecipesPageContent() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+              variants={staggerContainer}
+              initial={shouldReduceMotion ? false : "initial"}
+              animate={shouldReduceMotion ? false : "animate"}
+            >
               {myRecipes.map((recipe) => (
-                <a
+                <motion.a
                   key={recipe.id}
                   href={`/dashboard/recipes/${recipe.slug}`}
                   className="group rounded-lg border p-6 hover:border-primary hover:shadow-md transition-all"
+                  variants={fadeUp}
+                  {...(shouldReduceMotion ? {} : cardHover)}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="font-semibold group-hover:text-primary">
@@ -265,9 +285,9 @@ function RecipesPageContent() {
                   <div className="text-xs text-muted-foreground">
                     Créée le {new Date(recipe.created_at).toLocaleDateString("fr-FR")}
                   </div>
-                </a>
+                </motion.a>
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
       )}

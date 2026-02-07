@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
+import { PageTransition } from "@/components/page-transition";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,7 +32,9 @@ export default function RootLayout({
   if (!clerkKey) {
     return (
       <html lang="en" className={inter.variable}>
-        <body className="min-h-screen antialiased font-sans">{children}</body>
+        <body className="min-h-screen antialiased font-sans">
+          <PageTransition>{children}</PageTransition>
+        </body>
       </html>
     );
   }
@@ -39,7 +42,9 @@ export default function RootLayout({
   return (
     <ClerkProvider publishableKey={clerkKey}>
       <html lang="en" className={inter.variable}>
-        <body className="min-h-screen antialiased font-sans">{children}</body>
+        <body className="min-h-screen antialiased font-sans">
+          <PageTransition>{children}</PageTransition>
+        </body>
       </html>
     </ClerkProvider>
   );

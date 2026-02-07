@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter, useParams } from "next/navigation";
 import { getLead, updateLead, addInteraction } from "@/lib/api";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 interface LeadDetail {
   id: string;
@@ -53,6 +55,7 @@ export default function LeadDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInteractionForm, setShowInteractionForm] = useState(false);
@@ -131,7 +134,12 @@ export default function LeadDetailPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <motion.div
+      className="container mx-auto p-6 max-w-4xl"
+      variants={staggerContainer}
+      initial={shouldReduceMotion ? false : "initial"}
+      animate={shouldReduceMotion ? false : "animate"}
+    >
       <div className="mb-6">
         <button
           onClick={() => router.back()}
@@ -147,7 +155,7 @@ export default function LeadDetailPage() {
         {/* Main content */}
         <div className="md:col-span-2 space-y-6">
           {/* Lead info */}
-          <div className="border rounded-lg p-6">
+          <motion.div className="border rounded-lg p-6" variants={fadeUp}>
             <h3 className="font-semibold mb-4">Informations</h3>
             <div className="space-y-3">
               <div>
@@ -179,94 +187,112 @@ export default function LeadDetailPage() {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* Interactions timeline */}
-          <div className="border rounded-lg p-6">
+          <motion.div className="border rounded-lg p-6" variants={fadeUp}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Interactions</h3>
-              <button
+              <motion.button
                 onClick={() => setShowInteractionForm(!showInteractionForm)}
                 className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                {...(shouldReduceMotion ? {} : cardHover)}
               >
                 + Ajouter
-              </button>
+              </motion.button>
             </div>
 
-            {showInteractionForm && (
-              <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Type</label>
-                  <select
-                    value={interactionForm.type}
-                    onChange={(e) =>
-                      setInteractionForm({ ...interactionForm, type: e.target.value })
-                    }
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    {INTERACTION_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Sujet</label>
-                  <input
-                    type="text"
-                    value={interactionForm.subject}
-                    onChange={(e) =>
-                      setInteractionForm({ ...interactionForm, subject: e.target.value })
-                    }
-                    className="w-full p-2 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Notes</label>
-                  <textarea
-                    value={interactionForm.notes}
-                    onChange={(e) =>
-                      setInteractionForm({ ...interactionForm, notes: e.target.value })
-                    }
-                    className="w-full p-2 border rounded-lg"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Résultat</label>
-                  <input
-                    type="text"
-                    value={interactionForm.outcome}
-                    onChange={(e) =>
-                      setInteractionForm({ ...interactionForm, outcome: e.target.value })
-                    }
-                    className="w-full p-2 border rounded-lg"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleAddInteraction}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-                  >
-                    Enregistrer
-                  </button>
-                  <button
-                    onClick={() => setShowInteractionForm(false)}
-                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            )}
+            <AnimatePresence initial={false}>
+              {showInteractionForm && (
+                <motion.div
+                  className="mb-4 p-4 bg-muted rounded-lg space-y-3"
+                  variants={fadeUp}
+                  initial={shouldReduceMotion ? false : "initial"}
+                  animate={shouldReduceMotion ? false : "animate"}
+                  exit={shouldReduceMotion ? undefined : "exit"}
+                >
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Type</label>
+                    <select
+                      value={interactionForm.type}
+                      onChange={(e) =>
+                        setInteractionForm({ ...interactionForm, type: e.target.value })
+                      }
+                      className="w-full p-2 border rounded-lg"
+                    >
+                      {INTERACTION_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Sujet</label>
+                    <input
+                      type="text"
+                      value={interactionForm.subject}
+                      onChange={(e) =>
+                        setInteractionForm({ ...interactionForm, subject: e.target.value })
+                      }
+                      className="w-full p-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Notes</label>
+                    <textarea
+                      value={interactionForm.notes}
+                      onChange={(e) =>
+                        setInteractionForm({ ...interactionForm, notes: e.target.value })
+                      }
+                      className="w-full p-2 border rounded-lg"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Résultat</label>
+                    <input
+                      type="text"
+                      value={interactionForm.outcome}
+                      onChange={(e) =>
+                        setInteractionForm({ ...interactionForm, outcome: e.target.value })
+                      }
+                      className="w-full p-2 border rounded-lg"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleAddInteraction}
+                      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                    >
+                      Enregistrer
+                    </button>
+                    <button
+                      onClick={() => setShowInteractionForm(false)}
+                      className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <div className="space-y-4">
+            <motion.div
+              className="space-y-4"
+              variants={staggerContainer}
+              initial={shouldReduceMotion ? false : "initial"}
+              animate={shouldReduceMotion ? false : "animate"}
+            >
               {lead.interactions.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Aucune interaction</p>
               ) : (
                 lead.interactions.map((interaction) => (
-                  <div key={interaction.id} className="border-l-2 border-primary pl-4">
+                  <motion.div
+                    key={interaction.id}
+                    className="border-l-2 border-primary pl-4"
+                    variants={fadeUp}
+                  >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm">
                         {INTERACTION_TYPES.find((t) => t.value === interaction.type)?.label ||
@@ -287,17 +313,17 @@ export default function LeadDetailPage() {
                         Résultat: {interaction.outcome}
                       </p>
                     )}
-                  </div>
+                  </motion.div>
                 ))
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Status */}
-          <div className="border rounded-lg p-6">
+          <motion.div className="border rounded-lg p-6" variants={fadeUp}>
             <h3 className="font-semibold mb-4">Statut</h3>
             <select
               value={lead.status}
@@ -310,10 +336,10 @@ export default function LeadDetailPage() {
                 </option>
               ))}
             </select>
-          </div>
+          </motion.div>
 
           {/* Score */}
-          <div className="border rounded-lg p-6">
+          <motion.div className="border rounded-lg p-6" variants={fadeUp}>
             <h3 className="font-semibold mb-2">Score</h3>
             <div className="text-3xl font-bold">{lead.score}</div>
             <div className="w-full bg-muted rounded-full h-2 mt-2">
@@ -322,10 +348,10 @@ export default function LeadDetailPage() {
                 style={{ width: `${lead.score}%` }}
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* Metadata */}
-          <div className="border rounded-lg p-6">
+          <motion.div className="border rounded-lg p-6" variants={fadeUp}>
             <h3 className="font-semibold mb-4">Métadonnées</h3>
             <div className="space-y-2 text-sm">
               <div>
@@ -341,9 +367,9 @@ export default function LeadDetailPage() {
                 </span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

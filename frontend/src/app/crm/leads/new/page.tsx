@@ -4,10 +4,13 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { createLead } from "@/lib/api";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 export default function NewLeadPage() {
   const router = useRouter();
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -47,7 +50,12 @@ export default function NewLeadPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
+    <motion.div
+      className="container mx-auto p-6 max-w-2xl"
+      variants={staggerContainer}
+      initial={shouldReduceMotion ? false : "initial"}
+      animate={shouldReduceMotion ? false : "animate"}
+    >
       <div className="mb-6">
         <button
           onClick={() => router.back()}
@@ -58,7 +66,7 @@ export default function NewLeadPage() {
         <h2 className="text-2xl font-bold">Nouveau Lead</h2>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <motion.form onSubmit={handleSubmit} className="space-y-6" variants={fadeUp}>
         <div>
           <label className="block text-sm font-medium mb-2">
             Email <span className="text-destructive">*</span>
@@ -133,29 +141,39 @@ export default function NewLeadPage() {
           />
         </div>
 
-        {error && (
-          <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
-            {error}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {error && (
+            <motion.div
+              className="p-4 bg-destructive/10 text-destructive rounded-lg"
+              variants={fadeUp}
+              initial={shouldReduceMotion ? false : "initial"}
+              animate={shouldReduceMotion ? false : "animate"}
+              exit={shouldReduceMotion ? undefined : "exit"}
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="flex gap-2">
-          <button
+          <motion.button
             type="submit"
             disabled={loading}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+            {...(shouldReduceMotion ? {} : cardHover)}
           >
             {loading ? "Création..." : "Créer le Lead"}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             onClick={() => router.back()}
             className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90"
+            {...(shouldReduceMotion ? {} : cardHover)}
           >
             Annuler
-          </button>
+          </motion.button>
         </div>
-      </form>
-    </div>
+      </motion.form>
+    </motion.div>
   );
 }

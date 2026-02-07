@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getRecipe, createAgent } from "@/lib/api";
 import { useAuth } from "@clerk/nextjs";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 interface RecipeDetail {
   slug: string;
@@ -22,6 +24,7 @@ export default function RecipeDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -85,7 +88,12 @@ export default function RecipeDetailPage() {
   const requiredFields = recipe.input_schema?.required || [];
 
   return (
-    <div className="max-w-3xl">
+    <motion.div
+      className="max-w-3xl"
+      variants={staggerContainer}
+      initial={shouldReduceMotion ? false : "initial"}
+      animate={shouldReduceMotion ? false : "animate"}
+    >
       <div className="mb-6">
         <a
           href="/dashboard/recipes"
@@ -95,7 +103,7 @@ export default function RecipeDetailPage() {
         </a>
       </div>
 
-      <div className="flex items-start justify-between mb-6">
+      <motion.div className="flex items-start justify-between mb-6" variants={fadeUp}>
         <div>
           <h2 className="text-2xl font-bold">{recipe.name}</h2>
           <p className="text-muted-foreground mt-1">{recipe.description}</p>
@@ -108,24 +116,28 @@ export default function RecipeDetailPage() {
             </span>
           </div>
         </div>
-        <button
+        <motion.button
           onClick={handleCreateAgent}
           disabled={creating}
           className="rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          {...(shouldReduceMotion ? {} : cardHover)}
         >
           {creating ? "Creating..." : "Create Agent"}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200">
+        <motion.div
+          className="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200"
+          variants={fadeUp}
+        >
           {error}
-        </div>
+        </motion.div>
       )}
 
       {/* ROI Metrics */}
       {recipe.roi_metrics && Object.keys(recipe.roi_metrics).length > 0 && (
-        <div className="rounded-lg border p-4 mb-6">
+        <motion.div className="rounded-lg border p-4 mb-6" variants={fadeUp}>
           <h3 className="font-semibold mb-3">ROI Metrics</h3>
           <div className="grid grid-cols-3 gap-4 text-sm">
             {Object.entries(recipe.roi_metrics).map(([key, value]) => (
@@ -137,12 +149,12 @@ export default function RecipeDetailPage() {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Cost */}
       {recipe.estimated_cost_per_run && (
-        <div className="rounded-lg border p-4 mb-6">
+        <motion.div className="rounded-lg border p-4 mb-6" variants={fadeUp}>
           <h3 className="font-semibold mb-2">Estimated Cost</h3>
           <p className="text-2xl font-bold text-primary">
             ${recipe.estimated_cost_per_run.toFixed(4)}
@@ -151,11 +163,11 @@ export default function RecipeDetailPage() {
               per execution
             </span>
           </p>
-        </div>
+        </motion.div>
       )}
 
       {/* Input Schema */}
-      <div className="rounded-lg border p-4 mb-6">
+      <motion.div className="rounded-lg border p-4 mb-6" variants={fadeUp}>
         <h3 className="font-semibold mb-3">Input Fields</h3>
         <div className="space-y-2">
           {inputFields.map(([name, schema]: [string, any]) => (
@@ -176,10 +188,10 @@ export default function RecipeDetailPage() {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Steps */}
-      <div className="rounded-lg border p-4">
+      <motion.div className="rounded-lg border p-4" variants={fadeUp}>
         <h3 className="font-semibold mb-3">
           Workflow ({recipe.steps.length} steps)
         </h3>
@@ -205,7 +217,7 @@ export default function RecipeDetailPage() {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

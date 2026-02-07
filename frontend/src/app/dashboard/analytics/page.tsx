@@ -19,6 +19,8 @@ import {
   getAnalyticsTimeline,
   getAnalyticsInsights,
 } from "@/lib/api";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer } from "@/lib/motion";
 
 interface Overview {
   total_executions: number;
@@ -59,6 +61,7 @@ interface TimelineItem {
 
 export default function AnalyticsPage() {
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [overview, setOverview] = useState<Overview | null>(null);
   const [agents, setAgents] = useState<AgentStats[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
@@ -107,12 +110,16 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div>
+    <motion.div
+      variants={staggerContainer}
+      initial={shouldReduceMotion ? false : "initial"}
+      animate={shouldReduceMotion ? false : "animate"}
+    >
       <h2 className="text-2xl font-bold mb-6">Analytics</h2>
 
       {/* Insights */}
       {insights.length > 0 && (
-        <div className="mb-6 space-y-2">
+        <motion.div className="mb-6 space-y-2" variants={fadeUp}>
           {insights.map((insight, i) => (
             <div
               key={i}
@@ -131,45 +138,48 @@ export default function AnalyticsPage() {
               <div className="text-sm font-medium">{insight.recommendation}</div>
             </div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <div className="rounded-lg border p-4">
+      <motion.div
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8"
+        variants={staggerContainer}
+      >
+        <motion.div className="rounded-lg border p-4" variants={fadeUp}>
           <p className="text-xs text-muted-foreground">Total Executions</p>
           <p className="text-2xl font-bold">{overview.total_executions}</p>
-        </div>
-        <div className="rounded-lg border p-4">
+        </motion.div>
+        <motion.div className="rounded-lg border p-4" variants={fadeUp}>
           <p className="text-xs text-muted-foreground">Cout Total</p>
           <p className="text-2xl font-bold">
             ${(overview.total_cost_cents / 100).toFixed(4)}
           </p>
-        </div>
-        <div className="rounded-lg border p-4">
+        </motion.div>
+        <motion.div className="rounded-lg border p-4" variants={fadeUp}>
           <p className="text-xs text-muted-foreground">Cout Moy / Exec</p>
           <p className="text-2xl font-bold">
             ${(overview.avg_cost_cents / 100).toFixed(6)}
           </p>
-        </div>
-        <div className="rounded-lg border p-4">
+        </motion.div>
+        <motion.div className="rounded-lg border p-4" variants={fadeUp}>
           <p className="text-xs text-muted-foreground">Taux de Succes</p>
           <p className="text-2xl font-bold">{overview.success_rate}%</p>
-        </div>
-        <div className="rounded-lg border p-4">
+        </motion.div>
+        <motion.div className="rounded-lg border p-4" variants={fadeUp}>
           <p className="text-xs text-muted-foreground">Cache Hits</p>
           <p className="text-2xl font-bold">{overview.total_cache_hits}</p>
-        </div>
-        <div className="rounded-lg border p-4">
+        </motion.div>
+        <motion.div className="rounded-lg border p-4" variants={fadeUp}>
           <p className="text-xs text-muted-foreground">Duree Moyenne</p>
           <p className="text-2xl font-bold">{overview.avg_duration_ms}ms</p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Daily Executions */}
-        <div className="rounded-lg border p-6">
+        <motion.div className="rounded-lg border p-6" variants={fadeUp}>
           <h3 className="font-semibold mb-4">Executions par jour</h3>
           {timeline.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
@@ -203,10 +213,10 @@ export default function AnalyticsPage() {
               Aucune donnee pour cette periode.
             </p>
           )}
-        </div>
+        </motion.div>
 
         {/* Daily Cost */}
-        <div className="rounded-lg border p-6">
+        <motion.div className="rounded-lg border p-6" variants={fadeUp}>
           <h3 className="font-semibold mb-4">Cout par jour (cents)</h3>
           {timeline.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
@@ -233,12 +243,12 @@ export default function AnalyticsPage() {
               Aucune donnee pour cette periode.
             </p>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* Cost per Agent */}
       {agents.filter((a) => a.execution_count > 0).length > 0 && (
-        <div className="rounded-lg border p-6 mb-8">
+        <motion.div className="rounded-lg border p-6 mb-8" variants={fadeUp}>
           <h3 className="font-semibold mb-4">Cout par agent (cents)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={agents.filter((a) => a.execution_count > 0)}>
@@ -254,11 +264,11 @@ export default function AnalyticsPage() {
               />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </motion.div>
       )}
 
       {/* Agent Performance Table */}
-      <div className="rounded-lg border">
+      <motion.div className="rounded-lg border" variants={fadeUp}>
         <div className="p-4 border-b">
           <h3 className="font-semibold">Performance par agent</h3>
         </div>
@@ -311,7 +321,7 @@ export default function AnalyticsPage() {
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

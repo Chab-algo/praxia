@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { getBudgetStatus } from "@/lib/api";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer } from "@/lib/motion";
 
 interface BudgetStatus {
   spent_usd: number;
@@ -13,6 +15,7 @@ interface BudgetStatus {
 
 export default function UsagePage() {
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [budget, setBudget] = useState<BudgetStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -50,12 +53,16 @@ export default function UsagePage() {
         : "bg-green-500";
 
   return (
-    <div>
+    <motion.div
+      variants={staggerContainer}
+      initial={shouldReduceMotion ? false : "initial"}
+      animate={shouldReduceMotion ? false : "animate"}
+    >
       <h2 className="text-2xl font-bold mb-6">Usage & Costs</h2>
 
       {budget ? (
         <div className="space-y-6">
-          <div className="rounded-lg border p-6">
+          <motion.div className="rounded-lg border p-6" variants={fadeUp}>
             <h3 className="font-semibold mb-4">OpenAI Budget</h3>
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div>
@@ -72,17 +79,23 @@ export default function UsagePage() {
               </div>
             </div>
             <div className="w-full bg-muted rounded-full h-4">
-              <div
-                className={`h-4 rounded-full transition-all ${barColor}`}
-                style={{ width: `${Math.min(budget.usage_percent, 100)}%` }}
+              <motion.div
+                className={`h-4 rounded-full ${barColor}`}
+                initial={shouldReduceMotion ? false : { width: 0 }}
+                animate={
+                  shouldReduceMotion
+                    ? false
+                    : { width: `${Math.min(budget.usage_percent, 100)}%` }
+                }
+                transition={{ duration: 0.4, ease: "easeOut" }}
               />
             </div>
             <p className="text-sm text-muted-foreground mt-2">
               {budget.usage_percent.toFixed(1)}% of budget used
             </p>
-          </div>
+          </motion.div>
 
-          <div className="rounded-lg border p-6">
+          <motion.div className="rounded-lg border p-6" variants={fadeUp}>
             <h3 className="font-semibold mb-4">Model Pricing</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
@@ -107,13 +120,13 @@ export default function UsagePage() {
                 <span className="font-mono">$2.00 / $8.00 per 1M tokens</span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       ) : (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">
+        <motion.div className="rounded-lg border p-8 text-center text-muted-foreground" variants={fadeUp}>
           Could not load budget data. Make sure Redis is running.
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

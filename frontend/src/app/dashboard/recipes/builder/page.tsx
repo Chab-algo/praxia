@@ -7,6 +7,8 @@ import { generateRecipe, validateRecipe, createCustomRecipe, createAgent, getRec
 import { VisualRecipeEditor } from "@/components/recipe-editor/VisualRecipeEditor";
 import { recipeToVisual, visualToRecipe, validateVisualRecipe } from "@/lib/recipe-converter";
 import { VisualRecipe, RecipeDetail } from "@/types/recipe-editor";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 const DOMAINS = [
   { value: "ecommerce", label: "E-commerce" },
@@ -20,6 +22,7 @@ const DOMAINS = [
 export default function RecipeBuilderPage() {
   const router = useRouter();
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [mode, setMode] = useState<"assistant" | "visual">("assistant");
   const [requirement, setRequirement] = useState("");
   const [domain, setDomain] = useState("general");
@@ -122,36 +125,43 @@ export default function RecipeBuilderPage() {
   }
 
   return (
-    <div className={`container mx-auto p-6 ${mode === 'visual' ? 'max-w-full' : 'max-w-4xl'}`}>
+    <motion.div
+      className={`container mx-auto p-6 ${mode === 'visual' ? 'max-w-full' : 'max-w-4xl'}`}
+      variants={staggerContainer}
+      initial={shouldReduceMotion ? false : "initial"}
+      animate={shouldReduceMotion ? false : "animate"}
+    >
       <h1 className="text-3xl font-bold mb-6">Créer une Recipe</h1>
 
       {/* Mode selector */}
       <div className="mb-6 flex gap-2 border-b">
-        <button
+        <motion.button
           onClick={() => setMode("assistant")}
           className={`px-4 py-2 font-medium ${
             mode === "assistant"
               ? "border-b-2 border-primary text-primary"
               : "text-muted-foreground hover:text-foreground"
           }`}
+          {...(shouldReduceMotion ? {} : cardHover)}
         >
           Assistant IA
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           onClick={() => setMode("visual")}
           className={`px-4 py-2 font-medium ${
             mode === "visual"
               ? "border-b-2 border-primary text-primary"
               : "text-muted-foreground hover:text-foreground"
           }`}
+          {...(shouldReduceMotion ? {} : cardHover)}
         >
           Éditeur Visuel
-        </button>
+        </motion.button>
       </div>
 
       {/* Mode Assistant IA */}
       {mode === "assistant" && (
-        <div className="space-y-6">
+        <motion.div className="space-y-6" variants={fadeUp}>
           <div>
             <label className="block text-sm font-medium mb-2">
               Domaine métier
@@ -193,100 +203,122 @@ export default function RecipeBuilderPage() {
             {loading ? "Génération en cours..." : "Générer la Recipe"}
           </button>
 
-          {error && (
-            <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
-              {error}
-            </div>
-          )}
+          <AnimatePresence initial={false}>
+            {error && (
+              <motion.div
+                className="p-4 bg-destructive/10 text-destructive rounded-lg"
+                variants={fadeUp}
+                initial={shouldReduceMotion ? false : "initial"}
+                animate={shouldReduceMotion ? false : "animate"}
+                exit={shouldReduceMotion ? undefined : "exit"}
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {generatedRecipe && (
-            <div className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg">
-                <h3 className="font-semibold mb-2">Recipe générée : {generatedRecipe.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {generatedRecipe.description}
-                </p>
+          <AnimatePresence initial={false}>
+            {generatedRecipe && (
+              <motion.div
+                className="space-y-4"
+                variants={fadeUp}
+                initial={shouldReduceMotion ? false : "initial"}
+                animate={shouldReduceMotion ? false : "animate"}
+                exit={shouldReduceMotion ? undefined : "exit"}
+              >
+                <div className="p-4 bg-muted rounded-lg">
+                  <h3 className="font-semibold mb-2">Recipe générée : {generatedRecipe.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {generatedRecipe.description}
+                  </p>
 
-                {validation && (
-                  <div className="mb-4">
-                    {validation.errors.length > 0 && (
-                      <div className="mb-2 p-2 bg-destructive/10 text-destructive rounded text-sm">
-                        <strong>Erreurs :</strong>
-                        <ul className="list-disc list-inside mt-1">
-                          {validation.errors.map((e: string, i: number) => (
-                            <li key={i}>{e}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {validation.warnings.length > 0 && (
-                      <div className="mb-2 p-2 bg-yellow-100 text-yellow-800 rounded text-sm">
-                        <strong>Avertissements :</strong>
-                        <ul className="list-disc list-inside mt-1">
-                          {validation.warnings.map((w: string, i: number) => (
-                            <li key={i}>{w}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {validation.suggestions.length > 0 && (
-                      <div className="mb-2 p-2 bg-blue-100 text-blue-800 rounded text-sm">
-                        <strong>Suggestions :</strong>
-                        <ul className="list-disc list-inside mt-1">
-                          {validation.suggestions.map((s: string, i: number) => (
-                            <li key={i}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {validation.valid && (
-                      <div className="p-2 bg-green-100 text-green-800 rounded text-sm">
-                        ✓ Recipe valide
-                      </div>
-                    )}
+                  {validation && (
+                    <div className="mb-4">
+                      {validation.errors.length > 0 && (
+                        <div className="mb-2 p-2 bg-destructive/10 text-destructive rounded text-sm">
+                          <strong>Erreurs :</strong>
+                          <ul className="list-disc list-inside mt-1">
+                            {validation.errors.map((e: string, i: number) => (
+                              <li key={i}>{e}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {validation.warnings.length > 0 && (
+                        <div className="mb-2 p-2 bg-yellow-100 text-yellow-800 rounded text-sm">
+                          <strong>Avertissements :</strong>
+                          <ul className="list-disc list-inside mt-1">
+                            {validation.warnings.map((w: string, i: number) => (
+                              <li key={i}>{w}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {validation.suggestions.length > 0 && (
+                        <div className="mb-2 p-2 bg-blue-100 text-blue-800 rounded text-sm">
+                          <strong>Suggestions :</strong>
+                          <ul className="list-disc list-inside mt-1">
+                            {validation.suggestions.map((s: string, i: number) => (
+                              <li key={i}>{s}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {validation.valid && (
+                        <div className="p-2 bg-green-100 text-green-800 rounded text-sm">
+                          ✓ Recipe valide
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <motion.button
+                      onClick={handleSaveRecipe}
+                      disabled={saving || (validation && !validation.valid)}
+                      className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 disabled:opacity-50"
+                      {...(shouldReduceMotion ? {} : cardHover)}
+                    >
+                      {saving ? "Sauvegarde..." : "Sauvegarder la Recipe"}
+                    </motion.button>
+                    <motion.button
+                      onClick={handleCreateAgent}
+                      disabled={saving || (validation && !validation.valid)}
+                      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                      {...(shouldReduceMotion ? {} : cardHover)}
+                    >
+                      {saving ? "Création..." : "Créer un Agent"}
+                    </motion.button>
                   </div>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSaveRecipe}
-                    disabled={saving || (validation && !validation.valid)}
-                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 disabled:opacity-50"
-                  >
-                    {saving ? "Sauvegarde..." : "Sauvegarder la Recipe"}
-                  </button>
-                  <button
-                    onClick={handleCreateAgent}
-                    disabled={saving || (validation && !validation.valid)}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    {saving ? "Création..." : "Créer un Agent"}
-                  </button>
                 </div>
-              </div>
 
-              {/* Recipe preview */}
-              <details className="border rounded-lg">
-                <summary className="p-4 cursor-pointer font-medium">
-                  Voir les détails de la recipe
-                </summary>
-                <div className="p-4 border-t">
-                  <pre className="text-xs overflow-auto bg-muted p-4 rounded">
-                    {JSON.stringify(generatedRecipe, null, 2)}
-                  </pre>
-                </div>
-              </details>
-            </div>
-          )}
-        </div>
+                {/* Recipe preview */}
+                <details className="border rounded-lg">
+                  <summary className="p-4 cursor-pointer font-medium">
+                    Voir les détails de la recipe
+                  </summary>
+                  <div className="p-4 border-t">
+                    <pre className="text-xs overflow-auto bg-muted p-4 rounded">
+                      {JSON.stringify(generatedRecipe, null, 2)}
+                    </pre>
+                  </div>
+                </details>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       )}
 
       {/* Mode Éditeur Visuel */}
       {mode === "visual" && (
-        <div className="flex flex-col" style={{ height: 'calc(100vh - 200px)' }}>
+        <motion.div
+          className="flex flex-col"
+          style={{ height: 'calc(100vh - 200px)' }}
+          variants={fadeUp}
+        >
           <div className="mb-4 flex items-center justify-between">
             <div className="flex gap-2">
-              <button
+              <motion.button
                 onClick={async () => {
                   const slug = prompt("Entrez le slug de la recipe à charger (ou laissez vide pour créer une nouvelle)");
                   if (slug) {
@@ -303,10 +335,11 @@ export default function RecipeBuilderPage() {
                   }
                 }}
                 className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 text-sm"
+                {...(shouldReduceMotion ? {} : cardHover)}
               >
                 Charger une Recipe
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={() => {
                   setVisualRecipe({
                     nodes: [],
@@ -322,12 +355,13 @@ export default function RecipeBuilderPage() {
                   setVisualValidation(null);
                 }}
                 className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 text-sm"
+                {...(shouldReduceMotion ? {} : cardHover)}
               >
                 Nouvelle Recipe
-              </button>
+              </motion.button>
             </div>
             <div className="flex gap-2">
-              <button
+              <motion.button
                 onClick={async () => {
                   if (!visualRecipe) return;
                   const validation = validateVisualRecipe(visualRecipe);
@@ -362,10 +396,11 @@ export default function RecipeBuilderPage() {
                 }}
                 disabled={!visualRecipe || saving}
                 className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 disabled:opacity-50 text-sm"
+                {...(shouldReduceMotion ? {} : cardHover)}
               >
                 {saving ? "Sauvegarde..." : "Sauvegarder"}
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={async () => {
                   if (!visualRecipe) return;
                   const validation = validateVisualRecipe(visualRecipe);
@@ -406,47 +441,64 @@ export default function RecipeBuilderPage() {
                 }}
                 disabled={!visualRecipe || saving}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 text-sm"
+                {...(shouldReduceMotion ? {} : cardHover)}
               >
                 {saving ? "Création..." : "Créer un Agent"}
-              </button>
+              </motion.button>
             </div>
           </div>
-          
-          {error && (
-            <div className="mb-4 p-4 bg-destructive/10 text-destructive rounded-lg">
-              {error}
-            </div>
-          )}
-          
-          {visualValidation && (
-            <div className="mb-4 space-y-2">
-              {visualValidation.errors.length > 0 && (
-                <div className="p-2 bg-destructive/10 text-destructive rounded text-sm">
-                  <strong>Erreurs :</strong>
-                  <ul className="list-disc list-inside mt-1">
-                    {visualValidation.errors.map((e, i) => (
-                      <li key={i}>{e}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {visualValidation.warnings.length > 0 && (
-                <div className="p-2 bg-yellow-100 text-yellow-800 rounded text-sm">
-                  <strong>Avertissements :</strong>
-                  <ul className="list-disc list-inside mt-1">
-                    {visualValidation.warnings.map((w, i) => (
-                      <li key={i}>{w}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {visualValidation.valid && visualValidation.errors.length === 0 && (
-                <div className="p-2 bg-green-100 text-green-800 rounded text-sm">
-                  ✓ Workflow valide
-                </div>
-              )}
-            </div>
-          )}
+
+          <AnimatePresence initial={false}>
+            {error && (
+              <motion.div
+                className="mb-4 p-4 bg-destructive/10 text-destructive rounded-lg"
+                variants={fadeUp}
+                initial={shouldReduceMotion ? false : "initial"}
+                animate={shouldReduceMotion ? false : "animate"}
+                exit={shouldReduceMotion ? undefined : "exit"}
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence initial={false}>
+            {visualValidation && (
+              <motion.div
+                className="mb-4 space-y-2"
+                variants={fadeUp}
+                initial={shouldReduceMotion ? false : "initial"}
+                animate={shouldReduceMotion ? false : "animate"}
+                exit={shouldReduceMotion ? undefined : "exit"}
+              >
+                {visualValidation.errors.length > 0 && (
+                  <div className="p-2 bg-destructive/10 text-destructive rounded text-sm">
+                    <strong>Erreurs :</strong>
+                    <ul className="list-disc list-inside mt-1">
+                      {visualValidation.errors.map((e, i) => (
+                        <li key={i}>{e}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {visualValidation.warnings.length > 0 && (
+                  <div className="p-2 bg-yellow-100 text-yellow-800 rounded text-sm">
+                    <strong>Avertissements :</strong>
+                    <ul className="list-disc list-inside mt-1">
+                      {visualValidation.warnings.map((w, i) => (
+                        <li key={i}>{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {visualValidation.valid && visualValidation.errors.length === 0 && (
+                  <div className="p-2 bg-green-100 text-green-800 rounded text-sm">
+                    ✓ Workflow valide
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           <div className="flex-1 border rounded-lg overflow-hidden">
             {visualRecipe ? (
@@ -461,7 +513,7 @@ export default function RecipeBuilderPage() {
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 <div className="text-center">
                   <p className="mb-4">Commencez par créer une nouvelle recipe ou charger une existante</p>
-                  <button
+                  <motion.button
                     onClick={() => {
                       setVisualRecipe({
                         nodes: [],
@@ -476,15 +528,16 @@ export default function RecipeBuilderPage() {
                       });
                     }}
                     className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                    {...(shouldReduceMotion ? {} : cardHover)}
                   >
                     Créer une nouvelle Recipe
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

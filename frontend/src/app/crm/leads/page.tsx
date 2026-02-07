@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { listLeads, updateLead } from "@/lib/api";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 interface Lead {
   id: string;
@@ -33,9 +35,11 @@ const STATUSES = [
 export default function LeadsPage() {
   const router = useRouter();
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
+  const [hoverStatus, setHoverStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -84,6 +88,7 @@ export default function LeadsPage() {
       console.error("Failed to update lead:", err);
     } finally {
       setDraggedLead(null);
+      setHoverStatus(null);
     }
   };
 
@@ -117,27 +122,43 @@ export default function LeadsPage() {
       </div>
 
       {/* Kanban board */}
-      <div className="grid grid-cols-7 gap-4 overflow-x-auto pb-4">
+      <motion.div
+        className="grid grid-cols-7 gap-4 overflow-x-auto pb-4"
+        variants={staggerContainer}
+        initial={shouldReduceMotion ? false : "initial"}
+        animate={shouldReduceMotion ? false : "animate"}
+      >
         {STATUSES.map((status) => {
           const statusLeads = getLeadsByStatus(status.value);
+          const isHovering = hoverStatus === status.value;
           return (
-            <div
+            <motion.div
               key={status.value}
               className="flex-shrink-0 w-64"
-              onDragOver={handleDragOver}
+              variants={fadeUp}
+              onDragOver={(e) => {
+                handleDragOver(e);
+                setHoverStatus(status.value);
+              }}
+              onDragLeave={() => setHoverStatus(null)}
               onDrop={() => handleDrop(status.value)}
             >
               <div className={`p-3 rounded-t-lg ${status.color} font-medium`}>
                 {status.label} ({statusLeads.length})
               </div>
-              <div className="border border-t-0 rounded-b-lg p-2 min-h-[400px] bg-muted/30">
+              <div
+                className={`border border-t-0 rounded-b-lg p-2 min-h-[400px] bg-muted/30 transition-colors ${
+                  isHovering ? "bg-muted/60" : ""
+                }`}
+              >
                 {statusLeads.map((lead) => (
-                  <div
+                  <motion.div
                     key={lead.id}
                     draggable
                     onDragStart={() => handleDragStart(lead.id)}
                     onClick={() => router.push(`/crm/leads/${lead.id}`)}
                     className="mb-2 p-3 bg-background border rounded-lg cursor-move hover:shadow-md transition-shadow"
+                    {...(shouldReduceMotion ? {} : cardHover)}
                   >
                     <div className="font-medium text-sm mb-1">
                       {lead.full_name || lead.email}
@@ -157,13 +178,13 @@ export default function LeadsPage() {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 }

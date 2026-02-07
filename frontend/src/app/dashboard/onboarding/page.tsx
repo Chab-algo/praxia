@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { listRecipes, createAgent, createExecution } from "@/lib/api";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
 interface Recipe {
   slug: string;
@@ -26,6 +28,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function OnboardingPage() {
   const router = useRouter();
   const { getToken, isLoaded } = useAuth();
+  const shouldReduceMotion = useReducedMotion();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -112,111 +115,149 @@ export default function OnboardingPage() {
         ))}
       </div>
 
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {/* Step 1: Welcome */}
-      {step === 1 && (
-        <div className="text-center py-12">
-          <h2 className="text-3xl font-bold mb-4">Bienvenue sur PraxIA</h2>
-          <p className="text-lg text-muted-foreground mb-2">
-            Votre studio d&apos;agents IA pour automatiser les taches metier.
-          </p>
-          <p className="text-muted-foreground mb-8">
-            En quelques etapes, vous allez creer et tester votre premier agent IA.
-          </p>
-          <button
-            onClick={() => setStep(2)}
-            className="rounded-md bg-primary px-8 py-3 text-primary-foreground font-medium hover:bg-primary/90"
+      <AnimatePresence initial={false}>
+        {error && (
+          <motion.div
+            className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+            variants={fadeUp}
+            initial={shouldReduceMotion ? false : "initial"}
+            animate={shouldReduceMotion ? false : "animate"}
+            exit={shouldReduceMotion ? undefined : "exit"}
           >
-            Commencer
-          </button>
-        </div>
-      )}
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Step 2: Choose Recipe or Builder */}
-      {step === 2 && (
-        <div>
-          <h2 className="text-2xl font-bold mb-2">Créez votre agent</h2>
-          <p className="text-muted-foreground mb-6">
-            Choisissez une recipe prédéfinie ou créez votre propre agent avec l'Assistant IA.
-          </p>
-          
-          {/* Option: Recipe Builder */}
-          <div className="mb-6 p-6 border-2 border-primary rounded-lg bg-primary/5">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-lg">Assistant IA - Créer une Recipe Personnalisée</h3>
-              <span className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded">Nouveau</span>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Décrivez votre besoin métier en langage naturel et notre IA générera une recipe complète pour vous.
+      <AnimatePresence mode="wait" initial={false}>
+        {/* Step 1: Welcome */}
+        {step === 1 && (
+          <motion.div
+            key="step-1"
+            className="text-center py-12"
+            variants={fadeUp}
+            initial={shouldReduceMotion ? false : "initial"}
+            animate={shouldReduceMotion ? false : "animate"}
+            exit={shouldReduceMotion ? undefined : "exit"}
+          >
+            <h2 className="text-3xl font-bold mb-4">Bienvenue sur PraxIA</h2>
+            <p className="text-lg text-muted-foreground mb-2">
+              Votre studio d&apos;agents IA pour automatiser les taches metier.
+            </p>
+            <p className="text-muted-foreground mb-8">
+              En quelques etapes, vous allez creer et tester votre premier agent IA.
             </p>
             <button
-              onClick={() => router.push("/dashboard/recipes/builder")}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
+              onClick={() => setStep(2)}
+              className="rounded-md bg-primary px-8 py-3 text-primary-foreground font-medium hover:bg-primary/90"
             >
-              Utiliser l'Assistant IA
+              Commencer
             </button>
-          </div>
+          </motion.div>
+        )}
 
-          <div className="mb-4">
-            <h3 className="font-semibold mb-4">Ou choisissez une Recipe prédéfinie</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            {recipes.map((recipe) => (
+        {/* Step 2: Choose Recipe or Builder */}
+        {step === 2 && (
+          <motion.div
+            key="step-2"
+            variants={fadeUp}
+            initial={shouldReduceMotion ? false : "initial"}
+            animate={shouldReduceMotion ? false : "animate"}
+            exit={shouldReduceMotion ? undefined : "exit"}
+          >
+            <h2 className="text-2xl font-bold mb-2">Créez votre agent</h2>
+            <p className="text-muted-foreground mb-6">
+              Choisissez une recipe prédéfinie ou créez votre propre agent avec l'Assistant IA.
+            </p>
+
+            {/* Option: Recipe Builder */}
+            <motion.div
+              className="mb-6 p-6 border-2 border-primary rounded-lg bg-primary/5"
+              {...(shouldReduceMotion ? {} : cardHover)}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-lg">Assistant IA - Créer une Recipe Personnalisée</h3>
+                <span className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded">Nouveau</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Décrivez votre besoin métier en langage naturel et notre IA générera une recipe complète pour vous.
+              </p>
               <button
-                key={recipe.slug}
-                onClick={() => setSelectedRecipe(recipe)}
-                className={`rounded-lg border p-5 text-left transition-all ${
-                  selectedRecipe?.slug === recipe.slug
-                    ? "border-primary ring-2 ring-primary/20"
-                    : "hover:border-primary/50"
-                }`}
+                onClick={() => router.push("/dashboard/recipes/builder")}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="font-semibold">{recipe.name}</h3>
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                      CATEGORY_COLORS[recipe.category] || "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {recipe.category}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">{recipe.description}</p>
-                {recipe.estimated_cost_per_run && (
-                  <p className="text-xs text-muted-foreground">
-                    ~${recipe.estimated_cost_per_run.toFixed(4)} / execution
-                  </p>
-                )}
+                Utiliser l'Assistant IA
               </button>
-            ))}
-          </div>
-          <div className="flex justify-between">
-            <button
-              onClick={() => setStep(1)}
-              className="rounded-md border px-6 py-2.5 text-sm font-medium hover:bg-accent"
+            </motion.div>
+
+            <div className="mb-4">
+              <h3 className="font-semibold mb-4">Ou choisissez une Recipe prédéfinie</h3>
+            </div>
+
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"
+              variants={staggerContainer}
+              initial={shouldReduceMotion ? false : "initial"}
+              animate={shouldReduceMotion ? false : "animate"}
             >
-              Retour
-            </button>
-            <button
-              onClick={() => selectedRecipe && setStep(3)}
-              disabled={!selectedRecipe}
-              className="rounded-md bg-primary px-6 py-2.5 text-sm text-primary-foreground font-medium hover:bg-primary/90 disabled:opacity-50"
-            >
-              Suivant
-            </button>
-          </div>
-        </div>
-      )}
+              {recipes.map((recipe) => (
+                <motion.button
+                  key={recipe.slug}
+                  onClick={() => setSelectedRecipe(recipe)}
+                  className={`rounded-lg border p-5 text-left transition-all ${
+                    selectedRecipe?.slug === recipe.slug
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "hover:border-primary/50"
+                  }`}
+                  variants={fadeUp}
+                  {...(shouldReduceMotion ? {} : cardHover)}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-semibold">{recipe.name}</h3>
+                    <span
+                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                        CATEGORY_COLORS[recipe.category] || "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {recipe.category}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">{recipe.description}</p>
+                  {recipe.estimated_cost_per_run && (
+                    <p className="text-xs text-muted-foreground">
+                      ~${recipe.estimated_cost_per_run.toFixed(4)} / execution
+                    </p>
+                  )}
+                </motion.button>
+              ))}
+            </motion.div>
+            <div className="flex justify-between">
+              <button
+                onClick={() => setStep(1)}
+                className="rounded-md border px-6 py-2.5 text-sm font-medium hover:bg-accent"
+              >
+                Retour
+              </button>
+              <button
+                onClick={() => selectedRecipe && setStep(3)}
+                disabled={!selectedRecipe}
+                className="rounded-md bg-primary px-6 py-2.5 text-sm text-primary-foreground font-medium hover:bg-primary/90 disabled:opacity-50"
+              >
+                Suivant
+              </button>
+            </div>
+          </motion.div>
+        )}
 
       {/* Step 3: Create Agent */}
       {step === 3 && selectedRecipe && (
-        <div>
+        <motion.div
+          key="step-3"
+          variants={fadeUp}
+          initial={shouldReduceMotion ? false : "initial"}
+          animate={shouldReduceMotion ? false : "animate"}
+          exit={shouldReduceMotion ? undefined : "exit"}
+        >
           <h2 className="text-2xl font-bold mb-2">Creez votre agent</h2>
           <p className="text-muted-foreground mb-6">
             Donnez un nom a votre agent base sur <strong>{selectedRecipe.name}</strong>.
@@ -251,12 +292,18 @@ export default function OnboardingPage() {
               {loading ? "Creation..." : "Creer l'agent"}
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Step 4: Test Agent */}
       {step === 4 && selectedRecipe && createdAgent && (
-        <div>
+        <motion.div
+          key="step-4"
+          variants={fadeUp}
+          initial={shouldReduceMotion ? false : "initial"}
+          animate={shouldReduceMotion ? false : "animate"}
+          exit={shouldReduceMotion ? undefined : "exit"}
+        >
           <h2 className="text-2xl font-bold mb-2">Testez votre agent</h2>
           <p className="text-muted-foreground mb-6">
             Remplissez les champs ci-dessous pour lancer un test de <strong>{createdAgent.name}</strong>.
@@ -319,38 +366,46 @@ export default function OnboardingPage() {
             {loading ? "Execution en cours..." : "Lancer le test"}
           </button>
 
-          {testResult && (
-            <div className="rounded-lg border p-6 mb-6">
-              <h4 className="font-semibold text-green-700 mb-3">Resultat</h4>
-              {testResult.output_data && (
-                <pre className="bg-muted p-4 rounded text-xs overflow-auto max-h-64 mb-4">
-                  {JSON.stringify(testResult.output_data, null, 2)}
-                </pre>
-              )}
-              {testResult.steps && testResult.steps.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
-                    Steps ({testResult.steps.length}):
-                  </p>
-                  <div className="space-y-1">
-                    {testResult.steps.map((s, i) => (
-                      <div
-                        key={i}
-                        className="flex justify-between text-xs bg-muted/50 rounded px-3 py-1.5"
-                      >
-                        <span>{s.step_name}</span>
-                        <span className="text-muted-foreground">
-                          {s.model_used || "transform"} ·{" "}
-                          {s.duration_ms}ms ·{" "}
-                          ${(s.cost_cents / 100).toFixed(6)}
-                        </span>
-                      </div>
-                    ))}
+          <AnimatePresence initial={false}>
+            {testResult && (
+              <motion.div
+                className="rounded-lg border p-6 mb-6"
+                variants={fadeUp}
+                initial={shouldReduceMotion ? false : "initial"}
+                animate={shouldReduceMotion ? false : "animate"}
+                exit={shouldReduceMotion ? undefined : "exit"}
+              >
+                <h4 className="font-semibold text-green-700 mb-3">Resultat</h4>
+                {testResult.output_data && (
+                  <pre className="bg-muted p-4 rounded text-xs overflow-auto max-h-64 mb-4">
+                    {JSON.stringify(testResult.output_data, null, 2)}
+                  </pre>
+                )}
+                {testResult.steps && testResult.steps.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">
+                      Steps ({testResult.steps.length}):
+                    </p>
+                    <div className="space-y-1">
+                      {testResult.steps.map((s, i) => (
+                        <div
+                          key={i}
+                          className="flex justify-between text-xs bg-muted/50 rounded px-3 py-1.5"
+                        >
+                          <span>{s.step_name}</span>
+                          <span className="text-muted-foreground">
+                            {s.model_used || "transform"} ·{" "}
+                            {s.duration_ms}ms ·{" "}
+                            ${(s.cost_cents / 100).toFixed(6)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="flex justify-between">
             <button
@@ -370,12 +425,19 @@ export default function OnboardingPage() {
               Suivant
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Step 5: Success */}
       {step === 5 && (
-        <div className="text-center py-12">
+        <motion.div
+          key="step-5"
+          className="text-center py-12"
+          variants={fadeUp}
+          initial={shouldReduceMotion ? false : "initial"}
+          animate={shouldReduceMotion ? false : "animate"}
+          exit={shouldReduceMotion ? undefined : "exit"}
+        >
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 text-3xl mb-6">
             &#10003;
           </div>
@@ -401,8 +463,9 @@ export default function OnboardingPage() {
               Voir les Analytics
             </a>
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }
