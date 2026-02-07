@@ -1,10 +1,24 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
 export const metadata: Metadata = {
-  title: "PraxIA - AI Agent Studio",
-  description: "From business idea to production AI agent in 48h",
+  title: "PraxIA - Custom AI Agents in 48 Hours",
+  description:
+    "PraxIA transforms your business processes into production-ready AI agents. Choose a battle-tested recipe, customize it, deploy it — all within 48 hours.",
+  keywords: ["AI agents", "automation", "enterprise AI", "custom AI", "PraxIA"],
+  openGraph: {
+    title: "PraxIA - Custom AI Agents in 48 Hours",
+    description:
+      "From business idea to production AI agent in 48h. 5 battle-tested recipes ready to deploy.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -12,21 +26,20 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Clerk requires a publishable key - skip provider if not configured
   const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!clerkKey) {
     return (
-      <html lang="fr">
-        <body className="min-h-screen antialiased">{children}</body>
+      <html lang="en" className={inter.variable}>
+        <body className="min-h-screen antialiased font-sans">{children}</body>
       </html>
     );
   }
 
   return (
     <ClerkProvider publishableKey={clerkKey}>
-      <html lang="fr">
-        <body className="min-h-screen antialiased">{children}</body>
+      <html lang="en" className={inter.variable}>
+        <body className="min-h-screen antialiased font-sans">{children}</body>
       </html>
     </ClerkProvider>
   );
