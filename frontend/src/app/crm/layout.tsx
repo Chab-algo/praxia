@@ -1,6 +1,6 @@
 import { ToastProvider } from "@/components/toast";
 
-export default function DashboardLayout({
+export default function CRMLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -53,7 +53,7 @@ export default function DashboardLayout({
             </a>
             <a
               href="/crm/leads"
-              className="block rounded-md px-3 py-2 text-sm hover:bg-accent"
+              className="block rounded-md px-3 py-2 text-sm bg-accent font-medium"
             >
               CRM
             </a>

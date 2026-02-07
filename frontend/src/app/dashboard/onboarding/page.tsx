@@ -137,13 +137,35 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Step 2: Choose Recipe */}
+      {/* Step 2: Choose Recipe or Builder */}
       {step === 2 && (
         <div>
-          <h2 className="text-2xl font-bold mb-2">Choisissez une Recipe</h2>
+          <h2 className="text-2xl font-bold mb-2">Créez votre agent</h2>
           <p className="text-muted-foreground mb-6">
-            Les recipes sont des modeles d&apos;agents pre-configures. Selectionnez celui qui correspond a votre besoin.
+            Choisissez une recipe prédéfinie ou créez votre propre agent avec l'Assistant IA.
           </p>
+          
+          {/* Option: Recipe Builder */}
+          <div className="mb-6 p-6 border-2 border-primary rounded-lg bg-primary/5">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-lg">Assistant IA - Créer une Recipe Personnalisée</h3>
+              <span className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded">Nouveau</span>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Décrivez votre besoin métier en langage naturel et notre IA générera une recipe complète pour vous.
+            </p>
+            <button
+              onClick={() => router.push("/dashboard/recipes/builder")}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
+            >
+              Utiliser l'Assistant IA
+            </button>
+          </div>
+
+          <div className="mb-4">
+            <h3 className="font-semibold mb-4">Ou choisissez une Recipe prédéfinie</h3>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             {recipes.map((recipe) => (
               <button

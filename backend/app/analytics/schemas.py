@@ -1,6 +1,23 @@
 from pydantic import BaseModel
 
 
+class TrendItem(BaseModel):
+    date: str
+    total_executions: int
+    successful_executions: int
+    success_rate: float
+    total_cost_cents: float
+    avg_duration_ms: int
+
+
+class InsightItem(BaseModel):
+    type: str  # warning, cost, optimization, performance
+    title: str
+    message: str
+    recommendation: str
+    priority: str  # high, medium, low
+
+
 class OverviewResponse(BaseModel):
     total_executions: int
     successful_executions: int

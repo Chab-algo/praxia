@@ -56,14 +56,19 @@ def create_app() -> FastAPI:
     from app.agents import models as _agent_models  # noqa: F401
     from app.executions import models as _exec_models  # noqa: F401
     from app.usage import models as _usage_models  # noqa: F401
+    from app.crm import models as _crm_models  # noqa: F401
 
     # Register routers
     from app.agents.router import router as agents_router
     from app.analytics.router import router as analytics_router
     from app.auth.router import router as auth_router
+    from app.clients.router import router as clients_router
+    from app.crm.router import router as crm_router
     from app.executions.router import router as executions_router
+    from app.recommendations.router import router as recommendations_router
     from app.recipes.router import router as recipes_router
     from app.usage.router import router as usage_router
+    from app.workflows.router import router as workflows_router
 
     app.include_router(auth_router)
     app.include_router(recipes_router)
@@ -71,6 +76,10 @@ def create_app() -> FastAPI:
     app.include_router(executions_router)
     app.include_router(usage_router)
     app.include_router(analytics_router)
+    app.include_router(crm_router)
+    app.include_router(clients_router)
+    app.include_router(recommendations_router)
+    app.include_router(workflows_router)
 
     return app
 

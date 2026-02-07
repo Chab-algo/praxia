@@ -44,6 +44,122 @@ async def get_overview(db: AsyncSession, user_id: uuid.UUID) -> dict:
     }
 
 
+async def get_trends(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    days: int = 30,
+) -> list[dict]:
+    """
+    Analyse les tendances d'utilisation sur une période.
+
+    Returns:
+        list[dict]: Tendances par jour avec métriques
+    """
+    from datetime import date, timedelta
+    from sqlalchemy import func, Date, cast
+
+    end_date = date.today()
+    start_date = end_date - timedelta(days=days)
+
+    result = await db.execute(
+        select(
+            cast(Execution.created_at, Date).label("date"),
+            func.count(Execution.id).label("total_executions"),
+            func.count(func.case((Execution.status == "completed", 1))).label("successful"),
+            func.sum(Execution.total_cost_cents).label("total_cost_cents"),
+            func.avg(Execution.duration_ms).label("avg_duration_ms"),
+        )
+        .where(
+            Execution.user_id == user_id,
+            cast(Execution.created_at, Date) >= start_date,
+            cast(Execution.created_at, Date) <= end_date,
+        )
+        .group_by(cast(Execution.created_at, Date))
+        .order_by(cast(Execution.created_at, Date))
+    )
+
+    trends = []
+    for row in result.all():
+        trends.append({
+            "date": row.date.isoformat(),
+            "total_executions": row.total_executions,
+            "successful_executions": row.successful,
+            "success_rate": (
+                (row.successful / row.total_executions * 100)
+                if row.total_executions and row.total_executions > 0
+                else 0
+            ),
+            "total_cost_cents": float(row.total_cost_cents or 0),
+            "avg_duration_ms": round(float(row.avg_duration_ms or 0)),
+        })
+
+    return trends
+
+
+async def get_insights(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+) -> list[dict]:
+    """
+    Génère des insights automatiques basés sur l'utilisation.
+
+    Returns:
+        list[dict]: Liste d'insights avec recommandations
+    """
+    insights = []
+
+    # Get overview stats
+    overview = await get_overview(db, user_id)
+
+    # Insight: Low success rate
+    if overview["success_rate"] < 70 and overview["total_executions"] > 10:
+        insights.append({
+            "type": "warning",
+            "title": "Taux de succès faible",
+            "message": f"Votre taux de succès est de {overview['success_rate']:.1f}%.",
+            "recommendation": "Considérez améliorer vos prompts ou utiliser des modèles plus performants.",
+            "priority": "high",
+        })
+
+    # Insight: High costs
+    avg_cost = overview.get("avg_cost_cents", 0)
+    if avg_cost > 10:  # More than 10 cents per execution
+        insights.append({
+            "type": "cost",
+            "title": "Coûts élevés",
+            "message": f"Le coût moyen par exécution est de ${avg_cost/100:.4f}.",
+            "recommendation": "Utilisez des modèles moins coûteux ou optimisez vos prompts pour réduire les tokens.",
+            "priority": "medium",
+        })
+
+    # Insight: Low cache usage
+    cache_hit_rate = (
+        (overview["total_cache_hits"] / overview["total_executions"] * 100)
+        if overview["total_executions"] > 0
+        else 0
+    )
+    if cache_hit_rate < 20 and overview["total_executions"] > 20:
+        insights.append({
+            "type": "optimization",
+            "title": "Faible utilisation du cache",
+            "message": f"Seulement {cache_hit_rate:.1f}% de vos exécutions utilisent le cache.",
+            "recommendation": "Activez le cache pour les steps répétitifs pour réduire les coûts.",
+            "priority": "low",
+        })
+
+    # Insight: Performance
+    if overview["avg_duration_ms"] > 10000:  # More than 10 seconds
+        insights.append({
+            "type": "performance",
+            "title": "Performances lentes",
+            "message": f"La durée moyenne est de {overview['avg_duration_ms']/1000:.1f}s.",
+            "recommendation": "Parallélisez les steps ou utilisez des modèles plus rapides.",
+            "priority": "medium",
+        })
+
+    return insights
+
+
 async def get_agent_stats(db: AsyncSession, user_id: uuid.UUID) -> list[dict]:
     """Per-agent execution statistics."""
     result = await db.execute(

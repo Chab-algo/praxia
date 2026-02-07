@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 import structlog
 from fastapi import Depends, HTTPException
@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.middleware import verify_clerk_token
 from app.auth.models import User
 from app.db.engine import get_db
+from app.organizations.models import Organization
 
 logger = structlog.get_logger()
 
@@ -35,3 +36,16 @@ async def get_current_user(
         logger.info("user_auto_created", clerk_user_id=clerk_user_id)
 
     return user
+
+
+async def get_current_org(
+    payload: Annotated[dict, Depends(verify_clerk_token)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> Optional[Organization]:
+    """Get current organization from Clerk JWT payload (if available)."""
+    org_id = payload.get("org_id")
+    if not org_id:
+        return None
+
+    org = await db.scalar(select(Organization).where(Organization.clerk_org_id == org_id))
+    return org

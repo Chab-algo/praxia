@@ -12,8 +12,29 @@ from app.orchestrator.llm_client import get_llm_client
 from app.orchestrator.prompt_builder import prompt_builder
 from app.orchestrator.rate_limiter import RateLimiter
 from app.orchestrator.router_model import model_router
+from app.orchestrator.vision import is_base64_image
+from app.orchestrator.audio import is_audio_data
 
 logger = structlog.get_logger()
+
+
+def _is_image_data(data: str) -> bool:
+    """Check if a string contains image data."""
+    if not isinstance(data, str):
+        return False
+    # Check for base64 image patterns
+    if data.startswith("data:image/"):
+        return True
+    if len(data) > 100 and is_base64_image(data):
+        return True
+    return False
+
+
+def _is_audio_data(data: str) -> bool:
+    """Check if a string contains audio data."""
+    if not isinstance(data, str):
+        return False
+    return is_audio_data(data)
 
 
 class ExecutionResult:
@@ -80,6 +101,17 @@ class OrchestrationEngine:
                         result=result,
                         step_result=step_result,
                     )
+                elif step_type == "audio":
+                    output = await self._execute_audio_step(
+                        step=step,
+                        variables=variables,
+                        org_id=org_id,
+                        org_plan=org_plan,
+                        recipe_id=recipe_id,
+                        result=result,
+                        step_result=step_result,
+                        audio_data=variables.get("audio") or variables.get("audio_data"),
+                    )
                 elif step_type == "transform":
                     output = self._execute_transform_step(step, variables)
                     step_result["model_used"] = None
@@ -138,6 +170,42 @@ class OrchestrationEngine:
         step_result: dict,
     ) -> dict | str:
         """Execute a single LLM step."""
+        # Check if this step requires vision
+        requires_vision = step.get("vision", False)
+        
+        # Check if input data contains images or audio
+        has_images = False
+        has_audio = False
+        image_data = None
+        audio_data = None
+        
+        if not requires_vision:
+            # Check variables for image/audio data
+            for key, value in variables.items():
+                if isinstance(value, str):
+                    if _is_image_data(value):
+                        has_images = True
+                        image_data = value
+                    elif _is_audio_data(value):
+                        has_audio = True
+                        audio_data = value
+        
+        # Use vision if explicitly requested or images detected
+        if requires_vision or has_images:
+            return await self._execute_vision_step(
+                step=step,
+                variables=variables,
+                org_id=org_id,
+                org_plan=org_plan,
+                recipe_id=recipe_id,
+                result=result,
+                step_result=step_result,
+                image_data=image_data or variables.get("image") or variables.get("image_data"),
+            )
+        
+        # Note: Audio steps are handled separately in the main loop
+        # This is just for LLM steps that might process audio transcripts
+        
         # Build messages
         messages = prompt_builder.build_messages(
             system_prompt=step["system_prompt"],
@@ -231,6 +299,127 @@ class OrchestrationEngine:
             )
 
         return output
+
+    async def _execute_vision_step(
+        self,
+        step: dict,
+        variables: dict,
+        org_id: str,
+        org_plan: str,
+        recipe_id: str | None,
+        result: ExecutionResult,
+        step_result: dict,
+        image_data: str | None,
+    ) -> dict | str:
+        """Execute a vision step (image analysis)."""
+        from app.orchestrator.vision import analyze_image, prepare_image_content
+        
+        if not image_data:
+            raise ValueError("Image data required for vision step")
+
+        # Build prompt
+        system_prompt = prompt_builder.render_template(step["system_prompt"], variables)
+        user_prompt = prompt_builder.render_template(step["user_prompt"], variables)
+
+        # Select vision model
+        vision_model = step.get("vision_model", "gpt-4o-mini")
+        max_tokens = step.get("max_tokens", 500)
+
+        # Rate limit check
+        await self.rate_limiter.check(org_id, org_plan)
+
+        # Budget check (estimate for vision)
+        estimated_cost = 0.001  # Conservative estimate
+        await self.budget.check_and_reserve(estimated_cost)
+
+        # Analyze image
+        vision_result = await analyze_image(
+            image_data=image_data,
+            prompt=f"{system_prompt}\n\n{user_prompt}",
+            model=vision_model,
+            max_tokens=max_tokens,
+        )
+
+        # Record actual cost
+        await self.budget.record_actual(estimated_cost, vision_result["cost_usd"])
+
+        # Update result tracking
+        result.total_cost_usd += vision_result["cost_usd"]
+        result.total_input_tokens += vision_result["input_tokens"]
+        result.total_output_tokens += vision_result["output_tokens"]
+        result.models_used.add(vision_result["model"])
+
+        # Update step result
+        step_result["model_used"] = vision_result["model"]
+        step_result["input_tokens"] = vision_result["input_tokens"]
+        step_result["output_tokens"] = vision_result["output_tokens"]
+        step_result["cost_cents"] = round(vision_result["cost_usd"] * 100, 6)
+        step_result["cache_hit"] = False
+        step_result["vision"] = True
+
+        # Parse output
+        output = vision_result["content"]
+        if step.get("response_format") == "json_object":
+            try:
+                output = json.loads(output)
+            except json.JSONDecodeError:
+                logger.warning("json_parse_failed", content=output[:200])
+
+        return output
+
+    async def _execute_audio_step(
+        self,
+        step: dict,
+        variables: dict,
+        org_id: str,
+        org_plan: str,
+        recipe_id: str | None,
+        result: ExecutionResult,
+        step_result: dict,
+        audio_data: str | None,
+    ) -> dict | str:
+        """Execute an audio transcription step."""
+        from app.orchestrator.audio import transcribe_audio
+        
+        if not audio_data:
+            raise ValueError("Audio data required for audio step")
+
+        # Get language from step or variables
+        language = step.get("language") or variables.get("language")
+
+        # Rate limit check
+        await self.rate_limiter.check(org_id, org_plan)
+
+        # Budget check (Whisper pricing: $0.006 per minute)
+        estimated_cost = 0.01  # Conservative estimate
+        await self.budget.check_and_reserve(estimated_cost)
+
+        # Transcribe audio
+        transcription_result = await transcribe_audio(
+            audio_data=audio_data,
+            language=language,
+        )
+
+        # Record actual cost (approximate, Whisper is per minute)
+        await self.budget.record_actual(estimated_cost, estimated_cost)
+
+        # Update result tracking
+        result.total_cost_usd += estimated_cost
+        result.models_used.add("whisper-1")
+
+        # Update step result
+        step_result["model_used"] = "whisper-1"
+        step_result["input_tokens"] = 0  # Audio doesn't use tokens
+        step_result["output_tokens"] = 0
+        step_result["cost_cents"] = round(estimated_cost * 100, 6)
+        step_result["cache_hit"] = False
+        step_result["audio"] = True
+
+        # Add transcript to variables for next steps
+        variables["transcript"] = transcription_result["text"]
+
+        # Return transcript text
+        return transcription_result["text"]
 
     def _execute_transform_step(self, step: dict, variables: dict) -> dict:
         """Execute a data transform step (no LLM call)."""

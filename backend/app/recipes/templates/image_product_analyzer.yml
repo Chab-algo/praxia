@@ -1,0 +1,67 @@
+slug: image-product-analyzer
+name: Image Product Analyzer
+description: "Analyse des images de produits pour générer des descriptions et tags"
+category: ecommerce
+version: "1.0.0"
+icon: image
+
+estimated_cost_per_run: 0.0015
+
+input_schema:
+  type: object
+  required:
+    - product_image
+  properties:
+    product_image:
+      type: string
+      format: base64_image
+      description: "Image du produit en base64 ou data URL"
+    language:
+      type: string
+      enum: [fr, en]
+      default: fr
+
+output_schema:
+  type: object
+  properties:
+    description:
+      type: string
+    tags:
+      type: array
+      items:
+        type: string
+    category:
+      type: string
+    price_estimate:
+      type: number
+
+steps:
+  - id: analyze_image
+    name: "Analyze Product Image"
+    type: llm_call
+    vision: true
+    vision_model: gpt-4o-mini
+    complexity: analyze
+    system_prompt: |
+      Tu es un expert en e-commerce et analyse d'images produits. Analyse cette image de produit et génère
+      une description détaillée, des tags pertinents, une catégorie, et une estimation de prix.
+      Réponds en JSON avec les champs: description, tags (array), category, price_estimate.
+    user_prompt: "Image: {{product_image}}\nLangue: {{language}}"
+    max_tokens: 500
+    temperature: 0.3
+    response_format: json_object
+    cacheable: false
+
+  - id: format_output
+    name: "Format Output"
+    type: transform
+    mapping:
+      description: "{{steps.analyze_image.output.description}}"
+      tags: "{{steps.analyze_image.output.tags}}"
+      category: "{{steps.analyze_image.output.category}}"
+      price_estimate: "{{steps.analyze_image.output.price_estimate}}"
+
+roi_metrics:
+  time_saved: "15min/product"
+  cost_saved: "Based on avg 10min per manual product description"
+  use_case: "Automated product image analysis and description generation"

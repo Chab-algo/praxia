@@ -17,6 +17,7 @@ import {
   getAnalyticsOverview,
   getAnalyticsAgents,
   getAnalyticsTimeline,
+  getAnalyticsInsights,
 } from "@/lib/api";
 
 interface Overview {
@@ -61,6 +62,7 @@ export default function AnalyticsPage() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [agents, setAgents] = useState<AgentStats[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [insights, setInsights] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -69,14 +71,16 @@ export default function AnalyticsPage() {
       try {
         const token = await getToken();
         if (!token) return;
-        const [ov, ag, tl] = await Promise.all([
+        const [ov, ag, tl, ins] = await Promise.allSettled([
           getAnalyticsOverview(token),
           getAnalyticsAgents(token),
           getAnalyticsTimeline(token),
+          getAnalyticsInsights(token),
         ]);
-        setOverview(ov);
-        setAgents(ag);
-        setTimeline(tl);
+        setOverview(ov.status === "fulfilled" ? ov.value : null);
+        setAgents(ag.status === "fulfilled" ? ag.value : []);
+        setTimeline(tl.status === "fulfilled" ? tl.value : []);
+        setInsights(ins.status === "fulfilled" ? ins.value : []);
       } catch (err) {
         console.error("Failed to load analytics:", err);
       } finally {
@@ -105,6 +109,30 @@ export default function AnalyticsPage() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Analytics</h2>
+
+      {/* Insights */}
+      {insights.length > 0 && (
+        <div className="mb-6 space-y-2">
+          {insights.map((insight, i) => (
+            <div
+              key={i}
+              className={`p-4 rounded-lg border-l-4 ${
+                insight.priority === "high"
+                  ? "bg-red-50 border-red-500"
+                  : insight.priority === "medium"
+                  ? "bg-yellow-50 border-yellow-500"
+                  : "bg-blue-50 border-blue-500"
+              }`}
+            >
+              <div className="font-semibold mb-1">{insight.title}</div>
+              <div className="text-sm text-muted-foreground mb-2">
+                {insight.message}
+              </div>
+              <div className="text-sm font-medium">{insight.recommendation}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">

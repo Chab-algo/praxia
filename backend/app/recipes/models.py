@@ -1,6 +1,7 @@
+import uuid
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Numeric, String, Text, text
+from sqlalchemy import Boolean, ForeignKey, Numeric, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -23,5 +24,14 @@ class Recipe(Base, UUIDMixin, TimestampMixin):
 
     # Metadata
     is_public: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("TRUE"))
+    is_custom: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("FALSE"))
     icon: Mapped[str | None] = mapped_column(String(50))
     estimated_cost_per_run: Mapped[Decimal | None] = mapped_column(Numeric(10, 6))
+
+    # Custom recipe ownership
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True, index=True
+    )
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organizations.id"), nullable=True, index=True
+    )

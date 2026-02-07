@@ -1,0 +1,69 @@
+slug: audio-transcriber
+name: Audio Transcriber
+description: "Transcrit des fichiers audio en texte et génère un résumé"
+category: general
+version: "1.0.0"
+icon: microphone
+
+estimated_cost_per_run: 0.01
+
+input_schema:
+  type: object
+  required:
+    - audio_data
+  properties:
+    audio_data:
+      type: string
+      format: base64_audio
+      description: "Fichier audio en base64 ou data URL"
+    language:
+      type: string
+      enum: [fr, en, auto]
+      default: auto
+    summarize:
+      type: boolean
+      default: true
+      description: "Générer un résumé après transcription"
+
+output_schema:
+  type: object
+  properties:
+    transcript:
+      type: string
+    summary:
+      type: string
+    language:
+      type: string
+    duration_estimate:
+      type: number
+
+steps:
+  - id: transcribe_audio
+    name: "Transcribe Audio"
+    type: audio
+    language: "{{language}}"
+
+  - id: summarize_transcript
+    name: "Summarize Transcript"
+    type: llm_call
+    complexity: summarize
+    system_prompt: |
+      Tu es un expert en résumé de texte. Résume ce transcript audio de manière concise et structurée.
+      Inclus les points clés et les actions importantes.
+    user_prompt: "Transcript: {{steps.transcribe_audio.output}}"
+    max_tokens: 300
+    temperature: 0.3
+    cacheable: false
+
+  - id: format_output
+    name: "Format Output"
+    type: transform
+    mapping:
+      transcript: "{{steps.transcribe_audio.output}}"
+      summary: "{{steps.summarize_transcript.output}}"
+      language: "{{language}}"
+
+roi_metrics:
+  time_saved: "30min/meeting"
+  cost_saved: "Based on avg 1h manual transcription"
+  use_case: "Automated audio transcription and summarization"

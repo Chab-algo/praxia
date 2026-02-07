@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listRecipes } from "@/lib/api";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { listRecipes, listMyRecipes } from "@/lib/api";
 
 interface Recipe {
   slug: string;
@@ -21,17 +23,55 @@ const CATEGORY_COLORS: Record<string, string> = {
   support: "bg-teal-100 text-teal-800",
 };
 
+interface MyRecipe {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  category: string;
+  version: string;
+  is_custom: boolean;
+  created_at: string;
+}
+
 export default function RecipesPage() {
+  const router = useRouter();
+  const { getToken, isLoaded } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [myRecipes, setMyRecipes] = useState<MyRecipe[]>([]);
   const [filter, setFilter] = useState<string>("all");
+  const [tab, setTab] = useState<"catalog" | "my">("catalog");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    listRecipes()
-      .then(setRecipes)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    if (!isLoaded) return;
+
+    const load = async () => {
+      try {
+        const [publicRecipes, token] = await Promise.all([
+          listRecipes(),
+          getToken(),
+        ]);
+        setRecipes(publicRecipes);
+
+        if (token) {
+          try {
+            const custom = await listMyRecipes(token);
+            setMyRecipes(custom);
+          } catch (err) {
+            // Ignore if endpoint doesn't exist yet
+            console.error("Failed to load custom recipes:", err);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [isLoaded, getToken]);
 
   const filtered =
     filter === "all" ? recipes : recipes.filter((r) => r.category === filter);
@@ -47,74 +87,151 @@ export default function RecipesPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">Recipe Catalogue</h2>
-        <p className="text-muted-foreground mt-1">
-          Pre-built AI agent templates. Pick one and customize it for your client.
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Recipes</h2>
+          <p className="text-muted-foreground mt-1">
+            Pre-built AI agent templates and your custom recipes
+          </p>
+        </div>
+        <button
+          onClick={() => router.push("/dashboard/recipes/builder")}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+        >
+          Créer une Recipe
+        </button>
       </div>
 
-      {/* Category filter */}
-      <div className="flex gap-2 mb-6">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setFilter(cat)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              filter === cat
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            {cat === "all" ? "All" : cat.charAt(0).toUpperCase() + cat.slice(1)}
-          </button>
-        ))}
+      {/* Tabs */}
+      <div className="mb-6 flex gap-2 border-b">
+        <button
+          onClick={() => setTab("catalog")}
+          className={`px-4 py-2 font-medium ${
+            tab === "catalog"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Catalogue ({recipes.length})
+        </button>
+        <button
+          onClick={() => setTab("my")}
+          className={`px-4 py-2 font-medium ${
+            tab === "my"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Mes Recipes ({myRecipes.length})
+        </button>
       </div>
 
-      {/* Recipe cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((recipe) => (
-          <a
-            key={recipe.slug}
-            href={`/dashboard/recipes/${recipe.slug}`}
-            className="group rounded-lg border p-6 hover:border-primary hover:shadow-md transition-all"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <h3 className="font-semibold group-hover:text-primary">
-                {recipe.name}
-              </h3>
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  CATEGORY_COLORS[recipe.category] || "bg-gray-100 text-gray-800"
+      {tab === "catalog" && (
+        <>
+          {/* Category filter */}
+          <div className="flex gap-2 mb-6">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setFilter(cat)}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  filter === cat
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
                 }`}
               >
-                {recipe.category}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              {recipe.description}
-            </p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              {recipe.estimated_cost_per_run && (
-                <div>
-                  Cost:{" "}
-                  <span className="font-medium text-foreground">
-                    ${recipe.estimated_cost_per_run.toFixed(4)}/run
+                {cat === "all" ? "All" : cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Recipe cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((recipe) => (
+              <a
+                key={recipe.slug}
+                href={`/dashboard/recipes/${recipe.slug}`}
+                className="group rounded-lg border p-6 hover:border-primary hover:shadow-md transition-all"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="font-semibold group-hover:text-primary">
+                    {recipe.name}
+                  </h3>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      CATEGORY_COLORS[recipe.category] || "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {recipe.category}
                   </span>
                 </div>
-              )}
-              {recipe.roi_metrics?.time_saved && (
-                <div>
-                  Time saved:{" "}
-                  <span className="font-medium text-foreground">
-                    {recipe.roi_metrics.time_saved}
-                  </span>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {recipe.description}
+                </p>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  {recipe.estimated_cost_per_run && (
+                    <div>
+                      Cost:{" "}
+                      <span className="font-medium text-foreground">
+                        ${recipe.estimated_cost_per_run.toFixed(4)}/run
+                      </span>
+                    </div>
+                  )}
+                  {recipe.roi_metrics?.time_saved && (
+                    <div>
+                      Time saved:{" "}
+                      <span className="font-medium text-foreground">
+                        {recipe.roi_metrics.time_saved}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+
+      {tab === "my" && (
+        <div>
+          {myRecipes.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="mb-4">Vous n'avez pas encore de recipes personnalisées.</p>
+              <button
+                onClick={() => router.push("/dashboard/recipes/builder")}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                Créer votre première recipe
+              </button>
             </div>
-          </a>
-        ))}
-      </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {myRecipes.map((recipe) => (
+                <a
+                  key={recipe.id}
+                  href={`/dashboard/recipes/${recipe.slug}`}
+                  className="group rounded-lg border p-6 hover:border-primary hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="font-semibold group-hover:text-primary">
+                      {recipe.name}
+                    </h3>
+                    <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-purple-100 text-purple-800">
+                      Custom
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {recipe.description || "Aucune description"}
+                  </p>
+                  <div className="text-xs text-muted-foreground">
+                    Créée le {new Date(recipe.created_at).toLocaleDateString("fr-FR")}
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
