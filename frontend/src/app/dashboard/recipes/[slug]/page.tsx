@@ -29,11 +29,22 @@ export default function RecipeDetailPage() {
   const slug = params.slug as string;
 
   useEffect(() => {
-    getRecipe(slug)
-      .then(setRecipe)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [slug]);
+    const loadRecipe = async () => {
+      try {
+        const token = await getToken();
+        const recipeData = await getRecipe(slug, token || undefined);
+        setRecipe(recipeData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (isLoaded) {
+      loadRecipe();
+    }
+  }, [slug, isLoaded, getToken]);
 
   const handleCreateAgent = async () => {
     if (!recipe) return;

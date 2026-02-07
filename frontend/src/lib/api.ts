@@ -22,8 +22,12 @@ export async function listRecipes() {
   return fetchAPI("/api/recipes");
 }
 
-export async function getRecipe(slug: string) {
-  return fetchAPI(`/api/recipes/${slug}`);
+export async function getRecipe(slug: string, token?: string) {
+  const options: RequestInit = {};
+  if (token) {
+    options.headers = { Authorization: `Bearer ${token}` };
+  }
+  return fetchAPI(`/api/recipes/${slug}`, options);
 }
 
 export async function generateRecipe(token: string, data: {

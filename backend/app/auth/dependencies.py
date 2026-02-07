@@ -63,6 +63,9 @@ async def get_optional_user(
     if not credentials:
         return None
     
+    if not db:
+        return None
+    
     try:
         payload = await verify_clerk_token(credentials)
         clerk_user_id = payload.get("sub")
@@ -73,5 +76,6 @@ async def get_optional_user(
         return user
     except HTTPException:
         return None
-    except Exception:
+    except Exception as e:
+        logger.debug("optional_auth_failed", error=str(e))
         return None
