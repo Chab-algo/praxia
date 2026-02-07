@@ -30,6 +30,33 @@ async def list_recipes():
     return registry.list_recipes()
 
 
+@router.get("/my", response_model=list[RecipeResponse])
+async def list_my_recipes(
+    user: Annotated[User, Depends(get_current_user)],
+    org: Annotated[Optional[Organization], Depends(get_current_org)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Liste les recipes personnalisées de l'utilisateur."""
+    recipes = await service.list_custom_recipes(
+        db=db,
+        user_id=user.id,
+        organization_id=org.id if org else None,
+    )
+    return [
+        RecipeResponse(
+            id=str(r.id),
+            slug=r.slug,
+            name=r.name,
+            description=r.description,
+            category=r.category,
+            version=r.version,
+            is_custom=r.is_custom,
+            created_at=r.created_at,
+        )
+        for r in recipes
+    ]
+
+
 @router.get("/{slug}", response_model=RecipeDetail)
 async def get_recipe(slug: str):
     recipe = registry.get_recipe(slug)
@@ -121,30 +148,3 @@ async def create_custom_recipe(
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création: {str(e)}")
-
-
-@router.get("/my", response_model=list[RecipeResponse])
-async def list_my_recipes(
-    user: Annotated[User, Depends(get_current_user)],
-    org: Annotated[Optional[Organization], Depends(get_current_org)],
-    db: Annotated[AsyncSession, Depends(get_db)],
-):
-    """Liste les recipes personnalisées de l'utilisateur."""
-    recipes = await service.list_custom_recipes(
-        db=db,
-        user_id=user.id,
-        organization_id=org.id if org else None,
-    )
-    return [
-        RecipeResponse(
-            id=str(r.id),
-            slug=r.slug,
-            name=r.name,
-            description=r.description,
-            category=r.category,
-            version=r.version,
-            is_custom=r.is_custom,
-            created_at=r.created_at,
-        )
-        for r in recipes
-    ]
