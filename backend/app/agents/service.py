@@ -12,7 +12,6 @@ logger = structlog.get_logger()
 
 async def create_agent(
     db: AsyncSession,
-    org_id: uuid.UUID,
     user_id: uuid.UUID,
     name: str,
     recipe_slug: str,
@@ -25,7 +24,6 @@ async def create_agent(
         raise ValueError(f"Recipe '{recipe_slug}' not found")
 
     agent = Agent(
-        organization_id=org_id,
         recipe_slug=recipe_slug,
         name=name,
         description=description or recipe.get("description"),
@@ -41,20 +39,20 @@ async def create_agent(
     return agent
 
 
-async def list_agents(db: AsyncSession, org_id: uuid.UUID) -> list[Agent]:
+async def list_agents(db: AsyncSession, user_id: uuid.UUID) -> list[Agent]:
     result = await db.scalars(
         select(Agent)
-        .where(Agent.organization_id == org_id, Agent.deleted_at.is_(None))
+        .where(Agent.created_by == user_id, Agent.deleted_at.is_(None))
         .order_by(Agent.created_at.desc())
     )
     return list(result.all())
 
 
-async def get_agent(db: AsyncSession, agent_id: uuid.UUID, org_id: uuid.UUID) -> Agent | None:
+async def get_agent(db: AsyncSession, agent_id: uuid.UUID, user_id: uuid.UUID) -> Agent | None:
     return await db.scalar(
         select(Agent).where(
             Agent.id == agent_id,
-            Agent.organization_id == org_id,
+            Agent.created_by == user_id,
             Agent.deleted_at.is_(None),
         )
     )

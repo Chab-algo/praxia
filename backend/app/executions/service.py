@@ -18,14 +18,13 @@ logger = structlog.get_logger()
 async def create_execution(
     db: AsyncSession,
     agent_id: uuid.UUID,
-    org_id: uuid.UUID,
+    user_id: uuid.UUID,
     input_data: dict,
-    user_id: uuid.UUID | None = None,
     triggered_by: str = "api",
 ) -> Execution:
     execution = Execution(
         agent_id=agent_id,
-        organization_id=org_id,
+        user_id=user_id,
         input_data=input_data,
         status="pending",
         triggered_by=triggered_by,
@@ -61,11 +60,8 @@ async def run_execution(
     if not recipe:
         raise ValueError(f"Recipe '{recipe_slug}' not found")
 
-    # Get org plan
-    from app.organizations.models import Organization
-
-    org = await db.scalar(select(Organization).where(Organization.id == execution.organization_id))
-    org_plan = org.plan if org else "trial"
+    # Default plan for user-scoped execution
+    org_plan = "trial"
 
     # Mark as running
     execution.status = "running"
@@ -78,7 +74,7 @@ async def run_execution(
         result = await engine.execute(
             recipe_config=recipe,
             input_data=execution.input_data,
-            org_id=str(execution.organization_id),
+            org_id=str(execution.user_id),
             org_plan=org_plan,
             recipe_id=recipe_slug,
         )
@@ -135,21 +131,21 @@ async def run_execution(
 
 
 async def get_execution(
-    db: AsyncSession, execution_id: uuid.UUID, org_id: uuid.UUID
+    db: AsyncSession, execution_id: uuid.UUID, user_id: uuid.UUID
 ) -> Execution | None:
     return await db.scalar(
         select(Execution)
         .options(selectinload(Execution.steps))
-        .where(Execution.id == execution_id, Execution.organization_id == org_id)
+        .where(Execution.id == execution_id, Execution.user_id == user_id)
     )
 
 
 async def list_executions(
-    db: AsyncSession, org_id: uuid.UUID, limit: int = 50
+    db: AsyncSession, user_id: uuid.UUID, limit: int = 50
 ) -> list[Execution]:
     result = await db.scalars(
         select(Execution)
-        .where(Execution.organization_id == org_id)
+        .where(Execution.user_id == user_id)
         .order_by(Execution.created_at.desc())
         .limit(limit)
     )
@@ -157,7 +153,7 @@ async def list_executions(
 
 
 async def _update_usage_daily(db: AsyncSession, execution: Execution) -> None:
-    """Upsert usage_daily record for this execution's org + date."""
+    """Upsert usage_daily record for this execution's user + date."""
     from app.usage.models import UsageDaily
 
     exec_date = (execution.completed_at or execution.created_at).date()
@@ -172,7 +168,7 @@ async def _update_usage_daily(db: AsyncSession, execution: Execution) -> None:
 
     existing = await db.scalar(
         select(UsageDaily).where(
-            UsageDaily.organization_id == execution.organization_id,
+            UsageDaily.user_id == execution.user_id,
             UsageDaily.date == exec_date,
         )
     )
@@ -190,7 +186,7 @@ async def _update_usage_daily(db: AsyncSession, execution: Execution) -> None:
         existing.cache_hits += execution.cache_hits
     else:
         record = UsageDaily(
-            organization_id=execution.organization_id,
+            user_id=execution.user_id,
             date=exec_date,
             total_executions=1,
             successful_executions=int(is_success),

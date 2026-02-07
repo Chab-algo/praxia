@@ -11,13 +11,12 @@ from app.db.base import Base, UUIDMixin
 
 class UsageDaily(Base, UUIDMixin):
     __tablename__ = "usage_daily"
-    __table_args__ = (
-        # Unique constraint on (org, date)
-        {"info": {"unique_together": ("organization_id", "date")}},
-    )
 
-    organization_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("organizations.id"), nullable=False
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organizations.id"), nullable=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"), nullable=False, index=True
     )
     date: Mapped[date] = mapped_column(Date, nullable=False)
 
@@ -47,8 +46,11 @@ class UsageDaily(Base, UUIDMixin):
 class ApiKey(Base, UUIDMixin):
     __tablename__ = "api_keys"
 
-    organization_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("organizations.id"), nullable=False
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organizations.id"), nullable=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"), nullable=False, index=True
     )
 
     key_prefix: Mapped[str] = mapped_column(String(10), nullable=False)

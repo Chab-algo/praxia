@@ -11,8 +11,8 @@ from app.executions.models import Execution
 logger = structlog.get_logger()
 
 
-async def get_overview(db: AsyncSession, org_id: uuid.UUID) -> dict:
-    """Global stats for the organization."""
+async def get_overview(db: AsyncSession, user_id: uuid.UUID) -> dict:
+    """Global stats for the user."""
     result = await db.execute(
         select(
             func.count(Execution.id).label("total_executions"),
@@ -23,7 +23,7 @@ async def get_overview(db: AsyncSession, org_id: uuid.UUID) -> dict:
             func.coalesce(func.sum(Execution.total_output_tokens), 0).label("total_output_tokens"),
             func.coalesce(func.sum(Execution.cache_hits), 0).label("total_cache_hits"),
             func.coalesce(func.avg(Execution.duration_ms), 0).label("avg_duration_ms"),
-        ).where(Execution.organization_id == org_id)
+        ).where(Execution.user_id == user_id)
     )
     row = result.one()
 
@@ -44,7 +44,7 @@ async def get_overview(db: AsyncSession, org_id: uuid.UUID) -> dict:
     }
 
 
-async def get_agent_stats(db: AsyncSession, org_id: uuid.UUID) -> list[dict]:
+async def get_agent_stats(db: AsyncSession, user_id: uuid.UUID) -> list[dict]:
     """Per-agent execution statistics."""
     result = await db.execute(
         select(
@@ -60,7 +60,7 @@ async def get_agent_stats(db: AsyncSession, org_id: uuid.UUID) -> list[dict]:
             func.coalesce(func.sum(Execution.cache_hits), 0).label("cache_hits"),
         )
         .outerjoin(Execution, Execution.agent_id == Agent.id)
-        .where(Agent.organization_id == org_id, Agent.deleted_at.is_(None))
+        .where(Agent.created_by == user_id, Agent.deleted_at.is_(None))
         .group_by(Agent.id)
         .order_by(func.count(Execution.id).desc())
     )
@@ -87,7 +87,7 @@ async def get_agent_stats(db: AsyncSession, org_id: uuid.UUID) -> list[dict]:
 
 
 async def get_timeline(
-    db: AsyncSession, org_id: uuid.UUID, days: int = 30
+    db: AsyncSession, user_id: uuid.UUID, days: int = 30
 ) -> list[dict]:
     """Daily execution and cost data for charts."""
     since = date.today() - timedelta(days=days)
@@ -103,7 +103,7 @@ async def get_timeline(
             func.coalesce(func.sum(Execution.total_output_tokens), 0).label("output_tokens"),
         )
         .where(
-            Execution.organization_id == org_id,
+            Execution.user_id == user_id,
             cast(Execution.created_at, Date) >= since,
         )
         .group_by(cast(Execution.created_at, Date))

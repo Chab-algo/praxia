@@ -6,10 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents import service
 from app.agents.schemas import AgentCreate, AgentResponse, AgentUpdate
-from app.auth.dependencies import get_current_org, get_current_user
+from app.auth.dependencies import get_current_user
 from app.auth.models import User
 from app.db.engine import get_db
-from app.organizations.models import Organization
 
 router = APIRouter(prefix="/api/agents", tags=["agents"])
 
@@ -18,13 +17,11 @@ router = APIRouter(prefix="/api/agents", tags=["agents"])
 async def create_agent(
     body: AgentCreate,
     user: Annotated[User, Depends(get_current_user)],
-    org: Annotated[Organization, Depends(get_current_org)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     try:
         agent = await service.create_agent(
             db=db,
-            org_id=org.id,
             user_id=user.id,
             name=body.name,
             recipe_slug=body.recipe_slug,
@@ -48,10 +45,10 @@ async def create_agent(
 
 @router.get("", response_model=list[AgentResponse])
 async def list_agents(
-    org: Annotated[Organization, Depends(get_current_org)],
+    user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    agents = await service.list_agents(db, org.id)
+    agents = await service.list_agents(db, user.id)
     return [
         AgentResponse(
             id=str(a.id),
@@ -70,10 +67,10 @@ async def list_agents(
 @router.get("/{agent_id}", response_model=AgentResponse)
 async def get_agent(
     agent_id: uuid.UUID,
-    org: Annotated[Organization, Depends(get_current_org)],
+    user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    agent = await service.get_agent(db, agent_id, org.id)
+    agent = await service.get_agent(db, agent_id, user.id)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
     return AgentResponse(
@@ -92,10 +89,10 @@ async def get_agent(
 async def update_agent(
     agent_id: uuid.UUID,
     body: AgentUpdate,
-    org: Annotated[Organization, Depends(get_current_org)],
+    user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    agent = await service.get_agent(db, agent_id, org.id)
+    agent = await service.get_agent(db, agent_id, user.id)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 

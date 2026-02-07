@@ -12,5 +12,3 @@ class UserResponse(BaseModel):
     id: str
     email: str
     full_name: str | None
-    organization_id: str | None
-    organization_name: str | None

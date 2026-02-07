@@ -7,12 +7,11 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents import service as agent_service
-from app.auth.dependencies import get_current_org, get_current_user
+from app.auth.dependencies import get_current_user
 from app.auth.models import User
 from app.db.engine import get_db
 from app.executions import service
 from app.executions.schemas import ExecutionCreate, ExecutionResponse, ExecutionStepResponse
-from app.organizations.models import Organization
 
 logger = structlog.get_logger()
 
@@ -33,14 +32,13 @@ async def get_redis() -> Redis:
 async def create_and_run_execution(
     body: ExecutionCreate,
     user: Annotated[User, Depends(get_current_user)],
-    org: Annotated[Organization, Depends(get_current_org)],
     db: Annotated[AsyncSession, Depends(get_db)],
     redis: Annotated[Redis, Depends(get_redis)],
 ):
     agent_uuid = uuid.UUID(body.agent_id)
 
-    # Verify agent belongs to org
-    agent = await agent_service.get_agent(db, agent_uuid, org.id)
+    # Verify agent belongs to user
+    agent = await agent_service.get_agent(db, agent_uuid, user.id)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 
@@ -48,9 +46,8 @@ async def create_and_run_execution(
     execution = await service.create_execution(
         db=db,
         agent_id=agent_uuid,
-        org_id=org.id,
-        input_data=body.input_data,
         user_id=user.id,
+        input_data=body.input_data,
     )
 
     # Run synchronously for now (will be async via ARQ later)
@@ -61,27 +58,27 @@ async def create_and_run_execution(
         pass
 
     # Reload with steps
-    execution = await service.get_execution(db, execution.id, org.id)
+    execution = await service.get_execution(db, execution.id, user.id)
 
     return _to_response(execution)
 
 
 @router.get("", response_model=list[ExecutionResponse])
 async def list_executions(
-    org: Annotated[Organization, Depends(get_current_org)],
+    user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    executions = await service.list_executions(db, org.id)
+    executions = await service.list_executions(db, user.id)
     return [_to_response(e) for e in executions]
 
 
 @router.get("/{execution_id}", response_model=ExecutionResponse)
 async def get_execution(
     execution_id: uuid.UUID,
-    org: Annotated[Organization, Depends(get_current_org)],
+    user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    execution = await service.get_execution(db, execution_id, org.id)
+    execution = await service.get_execution(db, execution_id, user.id)
     if not execution:
         raise HTTPException(status_code=404, detail="Execution not found")
     return _to_response(execution)
