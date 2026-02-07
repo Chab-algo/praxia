@@ -1,0 +1,91 @@
+slug: cv-screener
+name: CV Screener
+description: "Extracts key skills from CVs and scores candidates against job requirements"
+category: hr
+version: "1.0.0"
+icon: user-check
+
+estimated_cost_per_run: 0.002
+
+input_schema:
+  type: object
+  required:
+    - cv_text
+    - job_requirements
+  properties:
+    cv_text:
+      type: string
+      description: "The extracted text content of the CV"
+    job_requirements:
+      type: string
+      description: "Job description or list of required skills"
+    must_have_skills:
+      type: array
+      items:
+        type: string
+      description: "Skills that are mandatory"
+
+output_schema:
+  type: object
+  properties:
+    candidate_name:
+      type: string
+    skills_found:
+      type: array
+      items:
+        type: string
+    experience_years:
+      type: integer
+    match_score:
+      type: number
+    recommendation:
+      type: string
+    summary:
+      type: string
+
+steps:
+  - id: extract_info
+    name: "Extract Candidate Info"
+    type: llm_call
+    complexity: extract
+    system_prompt: |
+      Extract structured information from this CV. Respond with JSON only.
+      Format: {"candidate_name": "...", "skills": ["skill1", "skill2"], "experience_years": N, "education": "...", "languages": ["..."]}
+    user_prompt: "CV Content:\n{{cv_text}}"
+    max_tokens: 300
+    temperature: 0.1
+    response_format: json_object
+    cacheable: true
+
+  - id: score_match
+    name: "Score Candidate Match"
+    type: llm_call
+    complexity: analyze
+    system_prompt: |
+      Score this candidate against the job requirements. Be objective and precise.
+      Respond with JSON: {"match_score": 0-100, "matched_skills": ["..."], "missing_skills": ["..."], "recommendation": "strong_yes"|"yes"|"maybe"|"no", "summary": "2 sentence summary"}
+    user_prompt: |
+      Candidate skills: {{steps.extract_info.output.skills}}
+      Experience: {{steps.extract_info.output.experience_years}} years
+      Job requirements: {{job_requirements}}
+      Must-have skills: {{must_have_skills}}
+    max_tokens: 300
+    temperature: 0.2
+    response_format: json_object
+    cacheable: false
+
+  - id: format_output
+    name: "Format Output"
+    type: transform
+    mapping:
+      candidate_name: "{{steps.extract_info.output.candidate_name}}"
+      skills_found: "{{steps.extract_info.output.skills}}"
+      experience_years: "{{steps.extract_info.output.experience_years}}"
+      match_score: "{{steps.score_match.output.match_score}}"
+      recommendation: "{{steps.score_match.output.recommendation}}"
+      summary: "{{steps.score_match.output.summary}}"
+
+roi_metrics:
+  time_saved: "20h/week"
+  cost_saved: "Based on avg 15min per manual CV review"
+  use_case: "Automated candidate screening and scoring"

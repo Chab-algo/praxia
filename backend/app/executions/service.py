@@ -1,0 +1,153 @@
+import uuid
+from datetime import datetime
+
+import structlog
+from redis.asyncio import Redis
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.agents.models import Agent
+from app.executions.models import Execution, ExecutionStep
+from app.orchestrator.engine import OrchestrationEngine
+from app.recipes import registry
+
+logger = structlog.get_logger()
+
+
+async def create_execution(
+    db: AsyncSession,
+    agent_id: uuid.UUID,
+    org_id: uuid.UUID,
+    input_data: dict,
+    user_id: uuid.UUID | None = None,
+    triggered_by: str = "api",
+) -> Execution:
+    execution = Execution(
+        agent_id=agent_id,
+        organization_id=org_id,
+        input_data=input_data,
+        status="pending",
+        triggered_by=triggered_by,
+        triggered_by_user_id=user_id,
+    )
+    db.add(execution)
+    await db.flush()
+    return execution
+
+
+async def run_execution(
+    db: AsyncSession,
+    redis: Redis,
+    execution_id: uuid.UUID,
+) -> Execution:
+    """Run an execution synchronously (for now, later via ARQ worker)."""
+    execution = await db.scalar(
+        select(Execution).where(Execution.id == execution_id)
+    )
+    if not execution:
+        raise ValueError(f"Execution {execution_id} not found")
+
+    # Load agent
+    agent = await db.scalar(select(Agent).where(Agent.id == execution.agent_id))
+    if not agent:
+        raise ValueError(f"Agent {execution.agent_id} not found")
+
+    # Get recipe config
+    # For now, we store recipe slug in agent config_overrides
+    recipe_slug = agent.config_overrides.get("recipe_slug", "review-responder")
+    recipe = registry.get_recipe(recipe_slug)
+    if not recipe:
+        raise ValueError(f"Recipe '{recipe_slug}' not found")
+
+    # Get org plan
+    from app.organizations.models import Organization
+
+    org = await db.scalar(select(Organization).where(Organization.id == execution.organization_id))
+    org_plan = org.plan if org else "trial"
+
+    # Mark as running
+    execution.status = "running"
+    execution.started_at = datetime.utcnow()
+    await db.flush()
+
+    # Execute
+    engine = OrchestrationEngine(redis)
+    try:
+        result = await engine.execute(
+            recipe_config=recipe,
+            input_data=execution.input_data,
+            org_id=str(execution.organization_id),
+            org_plan=org_plan,
+            recipe_id=recipe_slug,
+        )
+
+        # Update execution
+        execution.status = "completed"
+        execution.output_data = result.output
+        execution.total_input_tokens = result.total_input_tokens
+        execution.total_output_tokens = result.total_output_tokens
+        execution.total_cost_cents = round(result.total_cost_usd * 100, 4)
+        execution.cache_hits = result.cache_hits
+        execution.models_used = list(result.models_used) if isinstance(result.models_used, set) else result.models_used
+        execution.completed_at = datetime.utcnow()
+        execution.duration_ms = result.duration_ms
+
+        # Create step records
+        for step_data in result.steps:
+            step = ExecutionStep(
+                execution_id=execution.id,
+                step_index=step_data["step_index"],
+                step_name=step_data["step_name"],
+                step_type=step_data["step_type"],
+                model_used=step_data.get("model_used"),
+                prompt_hash=step_data.get("prompt_hash"),
+                input_tokens=step_data.get("input_tokens", 0),
+                output_tokens=step_data.get("output_tokens", 0),
+                cost_cents=step_data.get("cost_cents", 0),
+                cache_hit=step_data.get("cache_hit", False),
+                input_data=step_data.get("input_data"),
+                output_data=step_data.get("output_data"),
+                status=step_data["status"],
+                duration_ms=step_data.get("duration_ms"),
+            )
+            db.add(step)
+
+        await db.flush()
+        logger.info(
+            "execution_completed",
+            execution_id=str(execution.id),
+            cost=f"${result.total_cost_usd:.6f}",
+        )
+
+    except Exception as e:
+        execution.status = "failed"
+        execution.error_data = {"error": str(e), "type": type(e).__name__}
+        execution.completed_at = datetime.utcnow()
+        await db.flush()
+        logger.error("execution_failed", execution_id=str(execution.id), error=str(e))
+        raise
+
+    return execution
+
+
+async def get_execution(
+    db: AsyncSession, execution_id: uuid.UUID, org_id: uuid.UUID
+) -> Execution | None:
+    return await db.scalar(
+        select(Execution)
+        .options(selectinload(Execution.steps))
+        .where(Execution.id == execution_id, Execution.organization_id == org_id)
+    )
+
+
+async def list_executions(
+    db: AsyncSession, org_id: uuid.UUID, limit: int = 50
+) -> list[Execution]:
+    result = await db.scalars(
+        select(Execution)
+        .where(Execution.organization_id == org_id)
+        .order_by(Execution.created_at.desc())
+        .limit(limit)
+    )
+    return list(result.all())
