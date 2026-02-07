@@ -21,7 +21,7 @@ interface RecipeDetail {
 export default function RecipeDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useAuth();
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -29,6 +29,8 @@ export default function RecipeDetailPage() {
   const slug = params.slug as string;
 
   useEffect(() => {
+    if (!isLoaded) return;
+    
     const loadRecipe = async () => {
       try {
         const token = await getToken();
@@ -41,9 +43,7 @@ export default function RecipeDetailPage() {
       }
     };
     
-    if (isLoaded) {
-      loadRecipe();
-    }
+    loadRecipe();
   }, [slug, isLoaded, getToken]);
 
   const handleCreateAgent = async () => {
