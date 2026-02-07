@@ -26,11 +26,13 @@ async def create_agent(
 
     agent = Agent(
         organization_id=org_id,
+        recipe_slug=recipe_slug,
         name=name,
         description=description or recipe.get("description"),
         status="draft",
         config_overrides=config_overrides or {},
         custom_prompts=custom_prompts or {},
+        created_by=user_id,
     )
     db.add(agent)
     await db.flush()

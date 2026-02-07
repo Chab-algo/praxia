@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.orchestrator.budget import BudgetMonitor
 from app.orchestrator.cache import LLMCache
-from app.orchestrator.llm_client import llm_client
+from app.orchestrator.llm_client import get_llm_client
 from app.orchestrator.prompt_builder import prompt_builder
 from app.orchestrator.rate_limiter import RateLimiter
 from app.orchestrator.router_model import model_router
@@ -147,7 +147,8 @@ class OrchestrationEngine:
 
         # Select model
         complexity = step.get("complexity", "generate_short")
-        input_tokens = llm_client.count_messages_tokens(messages)
+        client = get_llm_client()
+        input_tokens = client.count_messages_tokens(messages)
         model = model_router.select(
             complexity=complexity,
             org_plan=org_plan,
@@ -185,7 +186,7 @@ class OrchestrationEngine:
         if step.get("response_format") == "json_object":
             response_format = {"type": "json_object"}
 
-        llm_response = await llm_client.complete(
+        llm_response = await client.complete(
             model=model,
             messages=messages,
             max_tokens=max_tokens,

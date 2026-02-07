@@ -19,6 +19,12 @@ export default function DashboardLayout({
             Dashboard
           </a>
           <a
+            href="/dashboard/recipes"
+            className="block rounded-md px-3 py-2 text-sm hover:bg-accent"
+          >
+            Recipes
+          </a>
+          <a
             href="/dashboard/agents"
             className="block rounded-md px-3 py-2 text-sm hover:bg-accent"
           >

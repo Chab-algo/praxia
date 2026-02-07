@@ -10,14 +10,15 @@ async def execute_agent_task(ctx: dict, execution_id: str) -> dict:
     from redis.asyncio import Redis
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from app.db.engine import async_session
+    from app.db.engine import get_session_maker
     from app.executions.service import run_execution
 
     logger.info("worker_executing", execution_id=execution_id)
 
     redis: Redis = ctx.get("redis")
+    session_maker = get_session_maker()
 
-    async with async_session() as db:
+    async with session_maker() as db:
         try:
             execution = await run_execution(db, redis, uuid.UUID(execution_id))
             await db.commit()

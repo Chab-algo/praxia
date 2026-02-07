@@ -53,9 +53,10 @@ async def run_execution(
     if not agent:
         raise ValueError(f"Agent {execution.agent_id} not found")
 
-    # Get recipe config
-    # For now, we store recipe slug in agent config_overrides
-    recipe_slug = agent.config_overrides.get("recipe_slug", "review-responder")
+    # Get recipe config from the agent's recipe_slug field
+    recipe_slug = agent.recipe_slug
+    if not recipe_slug:
+        raise ValueError(f"Agent {agent.id} has no recipe_slug configured")
     recipe = registry.get_recipe(recipe_slug)
     if not recipe:
         raise ValueError(f"Recipe '{recipe_slug}' not found")

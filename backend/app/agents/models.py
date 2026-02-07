@@ -15,6 +15,7 @@ class Agent(Base, UUIDMixin, TimestampMixin):
         ForeignKey("organizations.id"), nullable=False, index=True
     )
     recipe_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("recipes.id"))
+    recipe_slug: Mapped[str | None] = mapped_column(String(255))
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
