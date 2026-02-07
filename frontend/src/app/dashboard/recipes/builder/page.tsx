@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { generateRecipe, validateRecipe, createCustomRecipe, createAgent } from "@/lib/api";
+import { generateRecipe, validateRecipe, createCustomRecipe, createAgent, getRecipe } from "@/lib/api";
+import { VisualRecipeEditor } from "@/components/recipe-editor/VisualRecipeEditor";
+import { recipeToVisual, visualToRecipe, validateVisualRecipe } from "@/lib/recipe-converter";
+import { VisualRecipe, RecipeDetail } from "@/types/recipe-editor";
 
 const DOMAINS = [
   { value: "ecommerce", label: "E-commerce" },
@@ -25,6 +28,10 @@ export default function RecipeBuilderPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  
+  // Visual editor state
+  const [visualRecipe, setVisualRecipe] = useState<VisualRecipe | null>(null);
+  const [visualValidation, setVisualValidation] = useState<{ valid: boolean; errors: string[]; warnings: string[] } | null>(null);
 
   const handleGenerate = async () => {
     if (!requirement.trim()) {
@@ -115,7 +122,7 @@ export default function RecipeBuilderPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className={`container mx-auto p-6 ${mode === 'visual' ? 'max-w-full' : 'max-w-4xl'}`}>
       <h1 className="text-3xl font-bold mb-6">Créer une Recipe</h1>
 
       {/* Mode selector */}
@@ -137,9 +144,8 @@ export default function RecipeBuilderPage() {
               ? "border-b-2 border-primary text-primary"
               : "text-muted-foreground hover:text-foreground"
           }`}
-          disabled
         >
-          Éditeur Visuel (Bientôt)
+          Éditeur Visuel
         </button>
       </div>
 
@@ -275,10 +281,208 @@ export default function RecipeBuilderPage() {
         </div>
       )}
 
-      {/* Mode Éditeur Visuel - Coming soon */}
+      {/* Mode Éditeur Visuel */}
       {mode === "visual" && (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>L'éditeur visuel sera disponible prochainement.</p>
+        <div className="flex flex-col" style={{ height: 'calc(100vh - 200px)' }}>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  const slug = prompt("Entrez le slug de la recipe à charger (ou laissez vide pour créer une nouvelle)");
+                  if (slug) {
+                    try {
+                      const token = await getToken();
+                      if (!token) throw new Error("Non authentifié");
+                      const recipe = await getRecipe(slug, token);
+                      const visual = recipeToVisual(recipe as RecipeDetail);
+                      setVisualRecipe(visual);
+                      setVisualValidation(null);
+                    } catch (err: any) {
+                      setError(err.message || "Erreur lors du chargement");
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 text-sm"
+              >
+                Charger une Recipe
+              </button>
+              <button
+                onClick={() => {
+                  setVisualRecipe({
+                    nodes: [],
+                    edges: [],
+                    metadata: {
+                      name: "Nouvelle Recipe",
+                      description: "",
+                      category: "general",
+                      input_schema: {},
+                      output_schema: {},
+                    },
+                  });
+                  setVisualValidation(null);
+                }}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 text-sm"
+              >
+                Nouvelle Recipe
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  if (!visualRecipe) return;
+                  const validation = validateVisualRecipe(visualRecipe);
+                  setVisualValidation(validation);
+                  if (!validation.valid) {
+                    setError(`Le workflow contient des erreurs : ${validation.errors.join(', ')}`);
+                    return;
+                  }
+                  
+                  setSaving(true);
+                  setError(null);
+                  
+                  try {
+                    const token = await getToken();
+                    if (!token) throw new Error("Non authentifié");
+                    
+                    const recipe = visualToRecipe(visualRecipe);
+                    const fullRecipe = {
+                      ...recipe.metadata,
+                      steps: recipe.steps,
+                      slug: recipe.metadata.name.toLowerCase().replace(/\s+/g, '-'),
+                      version: "1.0.0",
+                    };
+                    
+                    await createCustomRecipe(token, fullRecipe);
+                    router.push("/dashboard/recipes?tab=my&saved=true");
+                  } catch (err: any) {
+                    setError(err.message || "Erreur lors de la sauvegarde");
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={!visualRecipe || saving}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 disabled:opacity-50 text-sm"
+              >
+                {saving ? "Sauvegarde..." : "Sauvegarder"}
+              </button>
+              <button
+                onClick={async () => {
+                  if (!visualRecipe) return;
+                  const validation = validateVisualRecipe(visualRecipe);
+                  setVisualValidation(validation);
+                  if (!validation.valid) {
+                    setError(`Le workflow contient des erreurs : ${validation.errors.join(', ')}`);
+                    return;
+                  }
+                  
+                  setSaving(true);
+                  setError(null);
+                  
+                  try {
+                    const token = await getToken();
+                    if (!token) throw new Error("Non authentifié");
+                    
+                    const recipe = visualToRecipe(visualRecipe);
+                    const fullRecipe = {
+                      ...recipe.metadata,
+                      steps: recipe.steps,
+                      slug: recipe.metadata.name.toLowerCase().replace(/\s+/g, '-'),
+                      version: "1.0.0",
+                    };
+                    
+                    const savedRecipe = await createCustomRecipe(token, fullRecipe);
+                    await createAgent(token, {
+                      name: fullRecipe.name,
+                      recipe_slug: savedRecipe.slug,
+                      description: fullRecipe.description,
+                    });
+                    
+                    router.push("/dashboard/agents");
+                  } catch (err: any) {
+                    setError(err.message || "Erreur lors de la création");
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={!visualRecipe || saving}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 text-sm"
+              >
+                {saving ? "Création..." : "Créer un Agent"}
+              </button>
+            </div>
+          </div>
+          
+          {error && (
+            <div className="mb-4 p-4 bg-destructive/10 text-destructive rounded-lg">
+              {error}
+            </div>
+          )}
+          
+          {visualValidation && (
+            <div className="mb-4 space-y-2">
+              {visualValidation.errors.length > 0 && (
+                <div className="p-2 bg-destructive/10 text-destructive rounded text-sm">
+                  <strong>Erreurs :</strong>
+                  <ul className="list-disc list-inside mt-1">
+                    {visualValidation.errors.map((e, i) => (
+                      <li key={i}>{e}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {visualValidation.warnings.length > 0 && (
+                <div className="p-2 bg-yellow-100 text-yellow-800 rounded text-sm">
+                  <strong>Avertissements :</strong>
+                  <ul className="list-disc list-inside mt-1">
+                    {visualValidation.warnings.map((w, i) => (
+                      <li key={i}>{w}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {visualValidation.valid && visualValidation.errors.length === 0 && (
+                <div className="p-2 bg-green-100 text-green-800 rounded text-sm">
+                  ✓ Workflow valide
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="flex-1 border rounded-lg overflow-hidden">
+            {visualRecipe ? (
+              <VisualRecipeEditor
+                initialRecipe={visualRecipe}
+                onRecipeChange={(updated) => {
+                  setVisualRecipe(updated);
+                  setVisualValidation(null);
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="text-center">
+                  <p className="mb-4">Commencez par créer une nouvelle recipe ou charger une existante</p>
+                  <button
+                    onClick={() => {
+                      setVisualRecipe({
+                        nodes: [],
+                        edges: [],
+                        metadata: {
+                          name: "Nouvelle Recipe",
+                          description: "",
+                          category: "general",
+                          input_schema: {},
+                          output_schema: {},
+                        },
+                      });
+                    }}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                  >
+                    Créer une nouvelle Recipe
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
