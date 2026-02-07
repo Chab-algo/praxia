@@ -40,9 +40,9 @@ async def check_client_health_workflow(
 
 @router.post("/leads/check-inactive")
 async def check_inactive_leads_workflow(
-    days: int = 30,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    days: int = 30,
 ):
     """Vérifie les leads inactifs."""
     workflow = BusinessWorkflow(db)

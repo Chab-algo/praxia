@@ -59,10 +59,10 @@ async def create_lead(
 
 @router.get("/leads", response_model=list[LeadResponse])
 async def list_leads(
-    status: Optional[str] = None,
     user: Annotated[User, Depends(get_current_user)],
     org: Annotated[Optional[Organization], Depends(get_current_org)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    status: Optional[str] = None,
 ):
     """Lister les leads."""
     leads = await service.list_leads(
