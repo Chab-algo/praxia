@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from typing import Annotated, Optional
 
-from app.auth.dependencies import get_current_user, get_current_org
+from app.auth.dependencies import get_current_user, get_current_org, get_optional_user
 from app.auth.models import User
 from app.db.engine import get_db
 from app.organizations.models import Organization
@@ -60,8 +60,8 @@ async def list_my_recipes(
 @router.get("/{slug}", response_model=RecipeDetail)
 async def get_recipe(
     slug: str,
-    user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[Optional[User], Depends(get_optional_user)] = None,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
 ):
     """Récupère une recipe par slug (publique ou personnalisée)."""
     # First try to get from registry (public recipes)
@@ -83,7 +83,10 @@ async def get_recipe(
             steps=recipe_dict.get("steps", []),
         )
     
-    # Not found in registry, try database (custom recipes)
+    # Not found in registry, try database (custom recipes) - requires authentication
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required to access custom recipes")
+    
     recipe = await service.get_custom_recipe_by_slug(
         db=db,
         slug=slug,
