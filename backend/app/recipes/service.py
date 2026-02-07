@@ -79,12 +79,21 @@ async def list_custom_recipes(
     Returns:
         list[Recipe]: Liste des recipes
     """
+    from sqlalchemy import or_
+    
     query = select(Recipe).where(Recipe.is_custom == True, Recipe.created_by == user_id)
 
+    # If organization_id is provided, include recipes with that org_id OR no org_id (user-scoped)
+    # If organization_id is None, return all user's recipes regardless of org_id
     if organization_id:
-        query = query.where(Recipe.organization_id == organization_id)
+        query = query.where(
+            or_(
+                Recipe.organization_id == organization_id,
+                Recipe.organization_id.is_(None)
+            )
+        )
 
-    result = await db.execute(query)
+    result = await db.execute(query.order_by(Recipe.created_at.desc()))
     return list(result.scalars().all())
 
 
