@@ -49,6 +49,14 @@ def create_app() -> FastAPI:
     async def health():
         return {"status": "ok", "version": "0.1.0"}
 
+    # Ensure all models are imported so SQLAlchemy metadata is complete
+    import app.auth.models  # noqa: F401
+    import app.organizations.models  # noqa: F401
+    import app.recipes.models  # noqa: F401
+    import app.agents.models  # noqa: F401
+    import app.executions.models  # noqa: F401
+    import app.usage.models  # noqa: F401
+
     # Register routers
     from app.agents.router import router as agents_router
     from app.analytics.router import router as analytics_router
