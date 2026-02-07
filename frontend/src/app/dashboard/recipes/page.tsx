@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { listRecipes, listMyRecipes } from "@/lib/api";
 
 interface Recipe {
@@ -36,42 +36,65 @@ interface MyRecipe {
 
 export default function RecipesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { getToken, isLoaded } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [myRecipes, setMyRecipes] = useState<MyRecipe[]>([]);
   const [filter, setFilter] = useState<string>("all");
-  const [tab, setTab] = useState<"catalog" | "my">("catalog");
+  const [tab, setTab] = useState<"catalog" | "my">(
+    (searchParams?.get("tab") as "catalog" | "my") || "catalog"
+  );
   const [loading, setLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const loadData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    try {
+      const [publicRecipes, token] = await Promise.all([
+        listRecipes(),
+        getToken(),
+      ]);
+      setRecipes(publicRecipes);
+
+      if (token) {
+        try {
+          const custom = await listMyRecipes(token);
+          setMyRecipes(custom);
+        } catch (err) {
+          // Ignore if endpoint doesn't exist yet
+          console.error("Failed to load custom recipes:", err);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isLoaded) return;
-
-    const load = async () => {
-      try {
-        const [publicRecipes, token] = await Promise.all([
-          listRecipes(),
-          getToken(),
-        ]);
-        setRecipes(publicRecipes);
-
-        if (token) {
-          try {
-            const custom = await listMyRecipes(token);
-            setMyRecipes(custom);
-          } catch (err) {
-            // Ignore if endpoint doesn't exist yet
-            console.error("Failed to load custom recipes:", err);
-          }
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+    loadData();
   }, [isLoaded, getToken]);
+
+  // Check for success parameter and show message
+  useEffect(() => {
+    if (searchParams?.get("saved") === "true") {
+      setShowSuccess(true);
+      // Clear the parameter from URL
+      router.replace("/dashboard/recipes?tab=my", { scroll: false });
+      // Hide message after 3 seconds
+      setTimeout(() => setShowSuccess(false), 3000);
+    }
+  }, [searchParams, router]);
+
+  // Update tab when URL parameter changes
+  useEffect(() => {
+    const tabParam = searchParams?.get("tab");
+    if (tabParam === "my" || tabParam === "catalog") {
+      setTab(tabParam);
+    }
+  }, [searchParams]);
 
   const filtered =
     filter === "all" ? recipes : recipes.filter((r) => r.category === filter);
@@ -102,10 +125,19 @@ export default function RecipesPage() {
         </button>
       </div>
 
+      {showSuccess && (
+        <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200">
+          ✓ Recipe sauvegardée avec succès !
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="mb-6 flex gap-2 border-b">
         <button
-          onClick={() => setTab("catalog")}
+          onClick={() => {
+            setTab("catalog");
+            router.replace("/dashboard/recipes?tab=catalog", { scroll: false });
+          }}
           className={`px-4 py-2 font-medium ${
             tab === "catalog"
               ? "border-b-2 border-primary text-primary"
@@ -115,7 +147,14 @@ export default function RecipesPage() {
           Catalogue ({recipes.length})
         </button>
         <button
-          onClick={() => setTab("my")}
+          onClick={async () => {
+            setTab("my");
+            router.replace("/dashboard/recipes?tab=my", { scroll: false });
+            // Reload data when switching to "my" tab
+            if (isLoaded) {
+              await loadData(false);
+            }
+          }}
           className={`px-4 py-2 font-medium ${
             tab === "my"
               ? "border-b-2 border-primary text-primary"

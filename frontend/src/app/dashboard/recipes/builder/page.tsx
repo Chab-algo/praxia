@@ -69,7 +69,8 @@ export default function RecipeBuilderPage() {
       if (!token) throw new Error("Non authentifié");
 
       await createCustomRecipe(token, generatedRecipe);
-      router.push("/dashboard/recipes");
+      // Redirect to "Mes Recipes" tab with a success parameter
+      router.push("/dashboard/recipes?tab=my&saved=true");
     } catch (err: any) {
       setError(err.message || "Erreur lors de la sauvegarde");
     } finally {
