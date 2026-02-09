@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { listAgents } from "@/lib/api";
+import { CardSkeleton, Skeleton } from "@/components/skeleton";
+import { EmptyState } from "@/components/empty-state";
 import { motion, useReducedMotion } from "framer-motion";
 import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 
@@ -48,8 +50,13 @@ export default function AgentsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div>
+        <Skeleton className="h-8 w-32 mb-6" />
+        <div className="space-y-3">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       </div>
     );
   }
@@ -67,17 +74,11 @@ export default function AgentsPage() {
       </div>
 
       {agents.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center">
-          <p className="text-muted-foreground mb-4">
-            No agents yet. Create one from a recipe to get started.
-          </p>
-          <a
-            href="/dashboard/recipes"
-            className="text-primary hover:underline text-sm"
-          >
-            Browse Recipes &rarr;
-          </a>
-        </div>
+        <EmptyState
+          title="No agents yet"
+          description="Create an AI agent from a recipe template to automate your workflows."
+          action={{ label: "Browse Recipes", href: "/dashboard/recipes" }}
+        />
       ) : (
         <motion.div
           className="space-y-3"

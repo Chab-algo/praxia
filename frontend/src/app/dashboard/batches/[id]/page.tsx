@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { getBatch, exportBatch } from "@/lib/api";
+import { Skeleton, CardSkeleton } from "@/components/skeleton";
+import { useToast } from "@/components/toast";
 import { motion, useReducedMotion } from "framer-motion";
 import { fadeUp } from "@/lib/motion";
 import { BatchProgress } from "@/components/batch/BatchProgress";
@@ -24,6 +26,7 @@ export default function BatchDetailPage() {
   const { getToken, isLoaded } = useAuth();
   const shouldReduceMotion = useReducedMotion();
   const batchId = params.id as string;
+  const { addToast } = useToast();
 
   const [batch, setBatch] = useState<BatchDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,8 +80,10 @@ export default function BatchDetailPage() {
       a.download = `${batch?.name || "batch"}-results.${format}`;
       a.click();
       URL.revokeObjectURL(url);
+      addToast(`Exported as ${format.toUpperCase()}`, "success");
     } catch (err) {
       console.error("Export failed:", err);
+      addToast("Export failed", "error");
     } finally {
       setExporting(false);
     }
@@ -86,8 +91,18 @@ export default function BatchDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div>
+        <Skeleton className="h-4 w-20 mb-2" />
+        <Skeleton className="h-8 w-64 mb-6" />
+        <Skeleton className="h-6 w-full mb-6" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       </div>
     );
   }
@@ -122,7 +137,7 @@ export default function BatchDetailPage() {
       animate={shouldReduceMotion ? false : "animate"}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <a

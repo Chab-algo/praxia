@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { listExecutions } from "@/lib/api";
+import { Skeleton, TableRowSkeleton } from "@/components/skeleton";
+import { EmptyState } from "@/components/empty-state";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { expandCollapse, fadeUp, staggerContainer } from "@/lib/motion";
 import { ResultRenderer } from "@/components/result-renderer/ResultRenderer";
@@ -56,8 +58,15 @@ export default function ExecutionsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div>
+        <Skeleton className="h-8 w-40 mb-6" />
+        <div className="space-y-2">
+          <TableRowSkeleton cols={4} />
+          <TableRowSkeleton cols={4} />
+          <TableRowSkeleton cols={4} />
+          <TableRowSkeleton cols={4} />
+          <TableRowSkeleton cols={4} />
+        </div>
       </div>
     );
   }
@@ -67,9 +76,11 @@ export default function ExecutionsPage() {
       <h2 className="text-2xl font-bold mb-6">Executions</h2>
 
       {executions.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">
-          No executions yet. Run an agent to see results here.
-        </div>
+        <EmptyState
+          title="No executions yet"
+          description="Run an agent to see execution results and analytics here."
+          action={{ label: "Browse Agents", href: "/dashboard/agents" }}
+        />
       ) : (
         <motion.div
           className="space-y-2"
@@ -119,7 +130,7 @@ export default function ExecutionsPage() {
                     animate={shouldReduceMotion ? false : "animate"}
                     exit={shouldReduceMotion ? undefined : "exit"}
                   >
-                    <div className="grid grid-cols-4 gap-4 text-sm mb-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                       <div>
                         <span className="text-muted-foreground">Models</span>
                         <p className="font-medium">

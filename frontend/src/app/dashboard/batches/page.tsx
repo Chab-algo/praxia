@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { listBatches } from "@/lib/api";
+import { CardSkeleton, Skeleton } from "@/components/skeleton";
+import { EmptyState } from "@/components/empty-state";
 import { motion, useReducedMotion } from "framer-motion";
 import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 import { BatchProgress } from "@/components/batch/BatchProgress";
@@ -83,8 +85,13 @@ export default function BatchesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div>
+        <Skeleton className="h-8 w-32 mb-6" />
+        <div className="space-y-3">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       </div>
     );
   }
@@ -102,17 +109,11 @@ export default function BatchesPage() {
       </div>
 
       {batches.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center">
-          <p className="text-muted-foreground mb-4">
-            No batches yet. Create one to process multiple items at once.
-          </p>
-          <a
-            href="/dashboard/batches/new"
-            className="text-primary hover:underline text-sm"
-          >
-            Create your first batch &rarr;
-          </a>
-        </div>
+        <EmptyState
+          title="No batches yet"
+          description="Process multiple items at once with batch executions. Upload a CSV or JSON file to get started."
+          action={{ label: "Create Batch", href: "/dashboard/batches/new" }}
+        />
       ) : (
         <motion.div
           className="space-y-3"

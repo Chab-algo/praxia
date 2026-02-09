@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { getRecipe, createExecution } from "@/lib/api";
+import { Skeleton } from "@/components/skeleton";
+import { useToast } from "@/components/toast";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
 import { ResultRenderer } from "@/components/result-renderer/ResultRenderer";
@@ -22,6 +24,7 @@ export default function AgentDetailPage() {
   const params = useParams();
   const { getToken, isLoaded } = useAuth();
   const shouldReduceMotion = useReducedMotion();
+  const { addToast } = useToast();
   const [agent, setAgent] = useState<AgentData | null>(null);
   const [recipe, setRecipe] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -93,11 +96,14 @@ export default function AgentDetailPage() {
 
       if (execution.status === "failed") {
         setError(execution.error_data?.error || "Execution failed");
+        addToast("Execution failed", "error");
       } else {
         setResult(execution);
+        addToast("Agent executed successfully", "success");
       }
     } catch (err: any) {
       setError(err.message);
+      addToast(err.message, "error");
     } finally {
       setExecuting(false);
     }
@@ -105,8 +111,16 @@ export default function AgentDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="max-w-4xl">
+        <Skeleton className="h-4 w-24 mb-6" />
+        <Skeleton className="h-8 w-64 mb-2" />
+        <Skeleton className="h-4 w-96 mb-6" />
+        <div className="rounded-lg border p-6">
+          <Skeleton className="h-5 w-32 mb-4" />
+          <Skeleton className="h-10 w-full mb-3" />
+          <Skeleton className="h-10 w-full mb-3" />
+          <Skeleton className="h-10 w-32" />
+        </div>
       </div>
     );
   }
@@ -271,7 +285,7 @@ export default function AgentDetailPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Result</h3>
-              <div className="flex gap-3 text-xs text-muted-foreground">
+              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                 <span>{result.duration_ms}ms</span>
                 <span>${(result.total_cost_cents / 100).toFixed(6)}</span>
                 <span>{result.cache_hits} cache hits</span>

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { listAgents, getRecipe, createBatch } from "@/lib/api";
+import { Skeleton } from "@/components/skeleton";
+import { useToast } from "@/components/toast";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { fadeUp } from "@/lib/motion";
 import { FileUploader, type ParsedFile } from "@/components/batch/FileUploader";
@@ -34,6 +36,7 @@ export default function NewBatchPage() {
   const { getToken, isLoaded } = useAuth();
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
+  const { addToast } = useToast();
 
   const [step, setStep] = useState(0);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -179,17 +182,21 @@ export default function NewBatchPage() {
         file_type: parsedFile?.fileType,
       });
 
+      addToast("Batch created successfully", "success");
       router.push(`/dashboard/batches/${result.id}`);
     } catch (err: any) {
       setError(err.message || "Failed to create batch");
+      addToast("Failed to create batch", "error");
       setSubmitting(false);
     }
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="max-w-3xl mx-auto">
+        <Skeleton className="h-8 w-48 mb-8" />
+        <Skeleton className="h-12 w-full mb-6" />
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }
