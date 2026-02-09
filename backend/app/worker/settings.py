@@ -29,3 +29,5 @@ class WorkerSettings:
     ]
     max_jobs = 10
     job_timeout = 300  # 5 minutes max per job
+    max_tries = 3
+    retry_after = 60  # seconds before retry

@@ -33,7 +33,7 @@ class BatchExecution(Base, UUIDMixin, TimestampMixin):
         Integer, default=0, server_default=text("0")
     )
     total_cost_cents: Mapped[Decimal] = mapped_column(
-        Numeric(10, 4), default=0, server_default=text("0")
+        Numeric(10, 6), default=0, server_default=text("0")
     )
     completed_at: Mapped[datetime | None] = mapped_column()
 

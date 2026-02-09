@@ -2,12 +2,12 @@ import csv
 import io
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import structlog
 from redis.asyncio import Redis
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -104,8 +104,15 @@ async def process_batch_item(
     if not item:
         raise ValueError(f"BatchItem {item_id} not found")
 
+    # Idempotency: skip if already processed (e.g. ARQ retry)
+    if item.status in ("completed", "failed"):
+        logger.info("batch_item_already_processed", item_id=str(item_id))
+        return
+
+    # Lock batch row to prevent concurrent counter updates
     batch = await db.scalar(
         select(BatchExecution)
+        .with_for_update()
         .options(selectinload(BatchExecution.agent))
         .where(BatchExecution.id == batch_id)
     )
@@ -333,3 +340,24 @@ async def export_batch(
         writer.writerow(row)
 
     return output.getvalue()
+
+
+async def cleanup_stuck_items(db: AsyncSession, timeout_minutes: int = 10) -> int:
+    """Mark items stuck in 'processing' for too long as failed."""
+    cutoff = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+    result = await db.execute(
+        update(BatchItem)
+        .where(
+            BatchItem.status == "processing",
+            BatchItem.created_at < cutoff,
+        )
+        .values(
+            status="failed",
+            error_data={"error": "Task timeout", "type": "TimeoutError"},
+            completed_at=datetime.utcnow(),
+        )
+    )
+    count = result.rowcount
+    if count > 0:
+        logger.warning("cleanup_stuck_items", count=count, timeout_minutes=timeout_minutes)
+    return count
