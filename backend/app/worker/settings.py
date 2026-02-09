@@ -23,6 +23,9 @@ def parse_redis_url(url: str) -> RedisSettings:
 
 class WorkerSettings:
     redis_settings = parse_redis_url(settings.redis_url)
-    functions = []  # Will be populated with task functions
+    functions = [
+        "app.worker.tasks.execute_agent_task",
+        "app.worker.tasks.process_batch_item_task",
+    ]
     max_jobs = 10
     job_timeout = 300  # 5 minutes max per job

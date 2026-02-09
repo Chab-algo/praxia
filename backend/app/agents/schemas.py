@@ -18,6 +18,7 @@ class AgentUpdate(BaseModel):
     status: str | None = None
     config_overrides: dict | None = None
     custom_prompts: dict | None = None
+    webhook_url: str | None = None
 
 
 class AgentResponse(BaseModel):
@@ -28,6 +29,7 @@ class AgentResponse(BaseModel):
     recipe_slug: str | None
     config_overrides: dict
     custom_prompts: dict
+    webhook_url: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
