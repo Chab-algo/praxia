@@ -14,7 +14,6 @@ async def create_custom_recipe(
     db: AsyncSession,
     user_id: uuid.UUID,
     recipe_dict: dict,
-    organization_id: uuid.UUID | None = None,
 ) -> Recipe:
     """
     Crée une recipe personnalisée dans la base de données.
@@ -23,7 +22,6 @@ async def create_custom_recipe(
         db: Session de base de données
         user_id: ID de l'utilisateur créateur
         recipe_dict: Dictionnaire de la recipe (format YAML parsé)
-        organization_id: ID de l'organisation (optionnel)
 
     Returns:
         Recipe: Recipe créée
@@ -33,8 +31,10 @@ async def create_custom_recipe(
     if not slug:
         raise ValueError("Le slug est requis")
 
-    # Check if slug already exists
-    existing = await db.scalar(select(Recipe).where(Recipe.slug == slug))
+    # Check if slug already exists for this user
+    existing = await db.scalar(
+        select(Recipe).where(Recipe.slug == slug, Recipe.created_by == user_id)
+    )
     if existing:
         raise ValueError(f"Une recipe avec le slug '{slug}' existe déjà")
 
@@ -53,7 +53,7 @@ async def create_custom_recipe(
         if recipe_dict.get("estimated_cost_per_run")
         else None,
         created_by=user_id,
-        organization_id=organization_id,
+        organization_id=None,  # No longer using org-based multi-tenancy
     )
 
     db.add(recipe)
@@ -66,32 +66,21 @@ async def create_custom_recipe(
 async def list_custom_recipes(
     db: AsyncSession,
     user_id: uuid.UUID,
-    organization_id: uuid.UUID | None = None,
 ) -> list[Recipe]:
     """
-    Liste les recipes personnalisées d'un utilisateur ou d'une organisation.
+    Liste les recipes personnalisées d'un utilisateur.
 
     Args:
         db: Session de base de données
         user_id: ID de l'utilisateur
-        organization_id: ID de l'organisation (optionnel, pour filtrer)
 
     Returns:
         list[Recipe]: Liste des recipes
     """
-    from sqlalchemy import or_
-    
-    query = select(Recipe).where(Recipe.is_custom == True, Recipe.created_by == user_id)
-
-    # If organization_id is provided, include recipes with that org_id OR no org_id (user-scoped)
-    # If organization_id is None, return all user's recipes regardless of org_id
-    if organization_id:
-        query = query.where(
-            or_(
-                Recipe.organization_id == organization_id,
-                Recipe.organization_id.is_(None)
-            )
-        )
+    query = select(Recipe).where(
+        Recipe.is_custom == True,
+        Recipe.created_by == user_id
+    )
 
     result = await db.execute(query.order_by(Recipe.created_at.desc()))
     return list(result.scalars().all())

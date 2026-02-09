@@ -1,10 +1,10 @@
 import uuid
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies import get_current_user, get_current_org
+from app.auth.dependencies import get_current_user
 from app.auth.models import User
 from app.crm import service
 from app.crm.schemas import (
@@ -16,7 +16,6 @@ from app.crm.schemas import (
     LeadUpdate,
 )
 from app.db.engine import get_db
-from app.organizations.models import Organization
 
 router = APIRouter(prefix="/api/crm", tags=["crm"])
 
@@ -25,7 +24,6 @@ router = APIRouter(prefix="/api/crm", tags=["crm"])
 async def create_lead(
     body: LeadCreate,
     user: Annotated[User, Depends(get_current_user)],
-    org: Annotated[Optional[Organization], Depends(get_current_org)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Créer un nouveau lead."""
@@ -34,7 +32,6 @@ async def create_lead(
             db=db,
             user_id=user.id,
             lead_data=body.model_dump(),
-            organization_id=org.id if org else None,
         )
         await db.commit()
         return LeadResponse(
@@ -60,7 +57,6 @@ async def create_lead(
 @router.get("/leads", response_model=list[LeadResponse])
 async def list_leads(
     user: Annotated[User, Depends(get_current_user)],
-    org: Annotated[Optional[Organization], Depends(get_current_org)],
     db: Annotated[AsyncSession, Depends(get_db)],
     status: Optional[str] = None,
 ):
@@ -69,7 +65,6 @@ async def list_leads(
         db=db,
         user_id=user.id,
         status=status,
-        organization_id=org.id if org else None,
     )
     return [
         LeadResponse(

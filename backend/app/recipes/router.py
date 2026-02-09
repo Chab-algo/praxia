@@ -5,10 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from typing import Annotated, Optional
 
-from app.auth.dependencies import get_current_user, get_current_org, get_optional_user
+from app.auth.dependencies import get_current_user, get_optional_user
 from app.auth.models import User
 from app.db.engine import get_db
-from app.organizations.models import Organization
 from app.recipes import registry, service
 from app.recipes.builder import RecipeBuilder
 from app.recipes.schemas import (
@@ -33,14 +32,12 @@ async def list_recipes():
 @router.get("/my", response_model=list[RecipeResponse])
 async def list_my_recipes(
     user: Annotated[User, Depends(get_current_user)],
-    org: Annotated[Optional[Organization], Depends(get_current_org)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Liste les recipes personnalisées de l'utilisateur."""
     recipes = await service.list_custom_recipes(
         db=db,
         user_id=user.id,
-        organization_id=org.id if org else None,
     )
     return [
         RecipeResponse(
@@ -158,7 +155,6 @@ async def validate_recipe(
 async def create_custom_recipe(
     body: RecipeCreateRequest,
     user: Annotated[User, Depends(get_current_user)],
-    org: Annotated[Optional[Organization], Depends(get_current_org)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Sauvegarde une recipe personnalisée."""
@@ -167,7 +163,6 @@ async def create_custom_recipe(
             db=db,
             user_id=user.id,
             recipe_dict=body.recipe,
-            organization_id=org.id if org else None,
         )
         await db.commit()
         return RecipeResponse(

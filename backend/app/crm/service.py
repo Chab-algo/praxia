@@ -14,14 +14,13 @@ async def create_lead(
     db: AsyncSession,
     user_id: uuid.UUID,
     lead_data: dict,
-    organization_id: uuid.UUID | None = None,
 ) -> Lead:
     """Créer un nouveau lead."""
     # Calculate initial score
     score = _calculate_lead_score(lead_data)
 
     lead = Lead(
-        organization_id=organization_id,
+        organization_id=None,  # No longer using org-based multi-tenancy
         email=lead_data["email"],
         full_name=lead_data.get("full_name"),
         company=lead_data.get("company"),
@@ -54,19 +53,10 @@ async def list_leads(
     db: AsyncSession,
     user_id: uuid.UUID,
     status: Optional[str] = None,
-    organization_id: uuid.UUID | None = None,
 ) -> list[Lead]:
     """Lister les leads."""
-    query = select(Lead)
-
-    # Filter by organization if provided
-    if organization_id:
-        query = query.where(Lead.organization_id == organization_id)
-    else:
-        # User-scoped: leads assigned to user or created by user
-        query = query.where(
-            (Lead.assigned_to == user_id) | (Lead.organization_id.is_(None))
-        )
+    # User-scoped: all leads assigned to user
+    query = select(Lead).where(Lead.assigned_to == user_id)
 
     # Filter by status
     if status:
@@ -89,7 +79,7 @@ async def get_lead(
     lead = await db.scalar(
         select(Lead).where(
             Lead.id == lead_id,
-            (Lead.assigned_to == user_id) | (Lead.organization_id.is_(None)),
+            Lead.assigned_to == user_id,
         )
     )
     return lead

@@ -61,8 +61,8 @@ class OrchestrationEngine:
         self,
         recipe_config: dict,
         input_data: dict,
-        org_id: str,
-        org_plan: str = "trial",
+        user_id: str,
+        user_plan: str = "trial",
         recipe_id: str | None = None,
     ) -> ExecutionResult:
         """Execute a recipe workflow with the given input data."""
@@ -95,8 +95,8 @@ class OrchestrationEngine:
                     output = await self._execute_llm_step(
                         step=step,
                         variables=variables,
-                        org_id=org_id,
-                        org_plan=org_plan,
+                        user_id=user_id,
+                        user_plan=user_plan,
                         recipe_id=recipe_id,
                         result=result,
                         step_result=step_result,
@@ -105,8 +105,8 @@ class OrchestrationEngine:
                     output = await self._execute_audio_step(
                         step=step,
                         variables=variables,
-                        org_id=org_id,
-                        org_plan=org_plan,
+                        user_id=user_id,
+                        user_plan=user_plan,
                         recipe_id=recipe_id,
                         result=result,
                         step_result=step_result,
@@ -163,8 +163,8 @@ class OrchestrationEngine:
         self,
         step: dict,
         variables: dict,
-        org_id: str,
-        org_plan: str,
+        user_id: str,
+        user_plan: str,
         recipe_id: str | None,
         result: ExecutionResult,
         step_result: dict,
@@ -195,8 +195,8 @@ class OrchestrationEngine:
             return await self._execute_vision_step(
                 step=step,
                 variables=variables,
-                org_id=org_id,
-                org_plan=org_plan,
+                user_id=user_id,
+                user_plan=user_plan,
                 recipe_id=recipe_id,
                 result=result,
                 step_result=step_result,
@@ -219,13 +219,13 @@ class OrchestrationEngine:
         input_tokens = client.count_messages_tokens(messages)
         model = model_router.select(
             complexity=complexity,
-            org_plan=org_plan,
+            org_plan=user_plan,
             input_tokens=input_tokens,
             force_model=step.get("force_model"),
         )
 
         # Rate limit check
-        await self.rate_limiter.check(org_id, org_plan)
+        await self.rate_limiter.check(user_id, user_plan)
 
         # Check cache
         cacheable = step.get("cacheable", True)
@@ -304,8 +304,8 @@ class OrchestrationEngine:
         self,
         step: dict,
         variables: dict,
-        org_id: str,
-        org_plan: str,
+        user_id: str,
+        user_plan: str,
         recipe_id: str | None,
         result: ExecutionResult,
         step_result: dict,
@@ -326,7 +326,7 @@ class OrchestrationEngine:
         max_tokens = step.get("max_tokens", 500)
 
         # Rate limit check
-        await self.rate_limiter.check(org_id, org_plan)
+        await self.rate_limiter.check(user_id, user_plan)
 
         # Budget check (estimate for vision)
         estimated_cost = 0.001  # Conservative estimate
@@ -371,8 +371,8 @@ class OrchestrationEngine:
         self,
         step: dict,
         variables: dict,
-        org_id: str,
-        org_plan: str,
+        user_id: str,
+        user_plan: str,
         recipe_id: str | None,
         result: ExecutionResult,
         step_result: dict,
@@ -388,7 +388,7 @@ class OrchestrationEngine:
         language = step.get("language") or variables.get("language")
 
         # Rate limit check
-        await self.rate_limiter.check(org_id, org_plan)
+        await self.rate_limiter.check(user_id, user_plan)
 
         # Budget check (Whisper pricing: $0.006 per minute)
         estimated_cost = 0.01  # Conservative estimate

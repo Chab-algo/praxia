@@ -46,13 +46,12 @@ async def get_current_org(
     payload: Annotated[dict, Depends(verify_clerk_token)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> Optional[Organization]:
-    """Get current organization from Clerk JWT payload (if available)."""
-    org_id = payload.get("org_id")
-    if not org_id:
-        return None
-
-    org = await db.scalar(select(Organization).where(Organization.clerk_org_id == org_id))
-    return org
+    """
+    DEPRECATED: Organization-based multi-tenancy has been removed (Feb 2026).
+    All resources are now scoped by user_id only.
+    This function is kept for backwards compatibility but always returns None.
+    """
+    return None
 
 
 async def get_optional_user(

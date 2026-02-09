@@ -58,10 +58,10 @@ async def run_execution(
     recipe_slug = agent.recipe_slug
     if not recipe_slug:
         raise ValueError(f"Agent {agent.id} has no recipe_slug configured")
-    
+
     # First try to get from registry (public recipes)
     recipe = registry.get_recipe(recipe_slug)
-    
+
     # If not found in registry, try database (custom recipes)
     if not recipe:
         recipe_db = await recipe_service.get_custom_recipe_by_slug(
@@ -76,7 +76,7 @@ async def run_execution(
             raise ValueError(f"Recipe '{recipe_slug}' not found")
 
     # Default plan for user-scoped execution
-    org_plan = "trial"
+    user_plan = "trial"
 
     # Mark as running
     execution.status = "running"
@@ -89,8 +89,8 @@ async def run_execution(
         result = await engine.execute(
             recipe_config=recipe,
             input_data=execution.input_data,
-            org_id=str(execution.user_id),
-            org_plan=org_plan,
+            user_id=str(execution.user_id),
+            user_plan=user_plan,
             recipe_id=recipe_slug,
         )
 
