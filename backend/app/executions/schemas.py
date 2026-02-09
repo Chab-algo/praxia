@@ -27,6 +27,7 @@ class ExecutionStepResponse(BaseModel):
 class ExecutionResponse(BaseModel):
     id: str
     agent_id: str
+    recipe_slug: str | None = None
     status: str
     input_data: dict
     output_data: dict | None

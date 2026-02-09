@@ -150,7 +150,7 @@ async def get_execution(
 ) -> Execution | None:
     return await db.scalar(
         select(Execution)
-        .options(selectinload(Execution.steps))
+        .options(selectinload(Execution.steps), selectinload(Execution.agent))
         .where(Execution.id == execution_id, Execution.user_id == user_id)
     )
 
@@ -160,6 +160,7 @@ async def list_executions(
 ) -> list[Execution]:
     result = await db.scalars(
         select(Execution)
+        .options(selectinload(Execution.agent))
         .where(Execution.user_id == user_id)
         .order_by(Execution.created_at.desc())
         .limit(limit)

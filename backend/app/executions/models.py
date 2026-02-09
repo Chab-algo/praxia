@@ -56,6 +56,7 @@ class Execution(Base, UUIDMixin):
     steps: Mapped[list["ExecutionStep"]] = relationship(
         back_populates="execution", cascade="all, delete-orphan"
     )
+    agent: Mapped["Agent"] = relationship(lazy="joined", foreign_keys="[Execution.agent_id]")
 
 
 class ExecutionStep(Base, UUIDMixin):

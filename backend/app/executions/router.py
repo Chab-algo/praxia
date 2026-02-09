@@ -104,9 +104,15 @@ def _to_response(execution) -> ExecutionResponse:
             for s in sorted(execution.steps, key=lambda s: s.step_index)
         ]
 
+    # Get recipe_slug from the related agent
+    recipe_slug = None
+    if hasattr(execution, "agent") and execution.agent:
+        recipe_slug = execution.agent.recipe_slug
+
     return ExecutionResponse(
         id=str(execution.id),
         agent_id=str(execution.agent_id),
+        recipe_slug=recipe_slug,
         status=execution.status,
         input_data=execution.input_data,
         output_data=execution.output_data,
