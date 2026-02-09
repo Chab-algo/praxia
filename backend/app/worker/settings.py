@@ -5,20 +5,22 @@ from app.config import settings
 
 def parse_redis_url(url: str) -> RedisSettings:
     """Parse a Redis URL into ARQ RedisSettings."""
-    # redis://host:port/db
-    url = url.replace("redis://", "")
-    parts = url.split("/")
-    host_port = parts[0]
-    database = int(parts[1]) if len(parts) > 1 else 0
+    # Supports: redis://host:port/db OR redis://user:password@host:port/db
+    from urllib.parse import urlparse
 
-    if ":" in host_port:
-        host, port = host_port.split(":")
-        port = int(port)
-    else:
-        host = host_port
-        port = 6379
+    parsed = urlparse(url)
 
-    return RedisSettings(host=host, port=port, database=database)
+    host = parsed.hostname or "localhost"
+    port = parsed.port or 6379
+    database = int(parsed.path.lstrip("/")) if parsed.path and parsed.path != "/" else 0
+    password = parsed.password
+
+    return RedisSettings(
+        host=host,
+        port=port,
+        database=database,
+        password=password,
+    )
 
 
 class WorkerSettings:
