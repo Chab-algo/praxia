@@ -227,3 +227,38 @@ export async function getOptimizationRecommendations(token: string, agentId: str
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+// Batches
+export async function createBatch(token: string, data: {
+  agent_id: string;
+  name: string;
+  items: Record<string, unknown>[];
+  file_type?: string;
+}) {
+  return fetchAPI("/api/batches", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function listBatches(token: string) {
+  return fetchAPI("/api/batches", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function getBatch(token: string, id: string, offset = 0, limit = 50) {
+  return fetchAPI(`/api/batches/${id}?offset=${offset}&limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function exportBatch(token: string, id: string, format: "csv" | "json") {
+  const res = await fetch(
+    `${API_BASE}/api/batches/${id}/export?format=${format}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.ok) throw new Error("Export failed");
+  return res.text();
+}
