@@ -21,7 +21,7 @@ class ExecutionStepResponse(BaseModel):
     cache_hit: bool
     status: str
     duration_ms: int | None
-    output_data: dict | None
+    output_data: dict | str | None  # Can be dict (JSON) or str (text response)
 
 
 class ExecutionResponse(BaseModel):
