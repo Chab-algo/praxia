@@ -3,7 +3,9 @@
 import React from "react";
 
 function formatKey(key: string): string {
-  return key
+  // Remove type annotations like (string), (integer), (boolean), etc.
+  const cleanKey = key.replace(/\([^)]+\)/g, '').trim();
+  return cleanKey
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }

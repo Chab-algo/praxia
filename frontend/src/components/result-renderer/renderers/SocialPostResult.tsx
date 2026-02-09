@@ -24,13 +24,13 @@ export function SocialPostResult({
   return (
     <div className="space-y-4">
       {/* Post Preview Card */}
-      <div className="rounded-xl border-2 border-muted p-5 bg-white">
+      <div className="rounded-xl border-2 border-muted p-5 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <div className="flex items-center gap-3 mb-3">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center">
             <MessageSquare className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold">Your Brand</p>
+            <p className="text-sm font-semibold text-foreground">Your Brand</p>
             <p className="text-xs text-muted-foreground">Just now</p>
           </div>
           <button
@@ -50,7 +50,7 @@ export function SocialPostResult({
             )}
           </button>
         </div>
-        <p className="text-sm leading-relaxed whitespace-pre-wrap mb-3">
+        <p className="text-sm leading-relaxed whitespace-pre-wrap mb-3 text-foreground">
           {d.post_text}
         </p>
         {d.hashtags && d.hashtags.length > 0 && (
