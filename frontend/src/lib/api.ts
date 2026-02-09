@@ -127,6 +127,12 @@ export async function getAnalyticsAgents(token: string) {
   });
 }
 
+export async function getDashboardStats(token: string) {
+  return fetchAPI("/api/analytics/dashboard", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export async function getAnalyticsTimeline(token: string, days: number = 30) {
   return fetchAPI(`/api/analytics/timeline?days=${days}`, {
     headers: { Authorization: `Bearer ${token}` },

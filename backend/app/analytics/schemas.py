@@ -53,3 +53,10 @@ class TimelineItem(BaseModel):
     cost_cents: float
     input_tokens: int
     output_tokens: int
+
+
+class DashboardStatsResponse(BaseModel):
+    agent_count: int
+    recent_execution_count: int
+    batch_count: int
+    budget_consumed_cents: float

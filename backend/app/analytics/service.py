@@ -6,6 +6,7 @@ from sqlalchemy import Date, case, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.models import Agent
+from app.batches.models import BatchExecution
 from app.executions.models import Execution
 
 logger = structlog.get_logger()
@@ -200,6 +201,43 @@ async def get_agent_stats(db: AsyncSession, user_id: uuid.UUID) -> list[dict]:
         }
         for row in rows
     ]
+
+
+async def get_dashboard_stats(db: AsyncSession, user_id: uuid.UUID) -> dict:
+    """Aggregate stats for the dashboard homepage."""
+    seven_days_ago = date.today() - timedelta(days=7)
+
+    agent_count = await db.scalar(
+        select(func.count(Agent.id)).where(
+            Agent.created_by == user_id, Agent.deleted_at.is_(None)
+        )
+    ) or 0
+
+    recent_exec_count = await db.scalar(
+        select(func.count(Execution.id)).where(
+            Execution.user_id == user_id,
+            cast(Execution.created_at, Date) >= seven_days_ago,
+        )
+    ) or 0
+
+    batch_count = await db.scalar(
+        select(func.count(BatchExecution.id)).where(
+            BatchExecution.user_id == user_id
+        )
+    ) or 0
+
+    total_cost = await db.scalar(
+        select(func.coalesce(func.sum(Execution.total_cost_cents), 0)).where(
+            Execution.user_id == user_id
+        )
+    )
+
+    return {
+        "agent_count": agent_count,
+        "recent_execution_count": recent_exec_count,
+        "batch_count": batch_count,
+        "budget_consumed_cents": float(total_cost or 0),
+    }
 
 
 async def get_timeline(

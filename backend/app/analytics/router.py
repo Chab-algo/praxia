@@ -4,12 +4,20 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analytics import service
-from app.analytics.schemas import AgentStatsItem, InsightItem, OverviewResponse, TimelineItem, TrendItem
+from app.analytics.schemas import AgentStatsItem, DashboardStatsResponse, InsightItem, OverviewResponse, TimelineItem, TrendItem
 from app.auth.dependencies import get_current_user
 from app.auth.models import User
 from app.db.engine import get_db
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
+
+
+@router.get("/dashboard", response_model=DashboardStatsResponse)
+async def get_dashboard_stats(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    return await service.get_dashboard_stats(db, user.id)
 
 
 @router.get("/overview", response_model=OverviewResponse)
