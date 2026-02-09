@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ThemeToggleCompact } from "./theme-toggle";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -37,12 +38,18 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:block w-64 shrink-0 border-r bg-muted/40 p-6">
+      <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r bg-muted/40 p-6">
         <div className="mb-8">
           <h1 className="text-xl font-bold text-primary">PraxIA</h1>
           <p className="text-xs text-muted-foreground">AI Agent Studio</p>
         </div>
-        <NavLinks />
+        <div className="flex-1">
+          <NavLinks />
+        </div>
+        <div className="pt-4 border-t flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">Theme</span>
+          <ThemeToggleCompact />
+        </div>
       </aside>
 
       {/* Mobile hamburger */}
@@ -78,7 +85,7 @@ export function Sidebar() {
               onClick={() => setOpen(false)}
             />
             <motion.aside
-              className="fixed left-0 top-0 bottom-0 z-50 w-64 bg-background p-6 shadow-xl lg:hidden"
+              className="fixed left-0 top-0 bottom-0 z-50 w-64 bg-background p-6 shadow-xl lg:hidden flex flex-col"
               initial={{ x: -256 }}
               animate={{ x: 0 }}
               exit={{ x: -256 }}
@@ -111,7 +118,13 @@ export function Sidebar() {
                   </svg>
                 </button>
               </div>
-              <NavLinks onClick={() => setOpen(false)} />
+              <div className="flex-1 overflow-y-auto">
+                <NavLinks onClick={() => setOpen(false)} />
+              </div>
+              <div className="pt-4 mt-4 border-t flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Theme</span>
+                <ThemeToggleCompact />
+              </div>
             </motion.aside>
           </>
         )}

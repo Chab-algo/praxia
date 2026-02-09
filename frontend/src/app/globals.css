@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* Base colors */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -22,6 +23,56 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* Premium Glass & Effects */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-blur: 12px;
+    --glass-blur-intense: 20px;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #8b5cf6 100%);
+    --gradient-accent: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+    --gradient-success: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+
+    /* Shadows */
+    --shadow-glow: 0 0 24px rgba(59, 130, 246, 0.3);
+    --shadow-glow-intense: 0 0 40px rgba(59, 130, 246, 0.5);
+    --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-card-hover: 0 20px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark {
+    /* Dark mode base */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+
+    /* Dark mode glass & effects */
+    --glass-bg: rgba(15, 23, 42, 0.8);
+    --glass-border: rgba(148, 163, 184, 0.1);
+    --glass-blur: 16px;
+    --glass-blur-intense: 24px;
+
+    /* Dark mode shadows */
+    --shadow-glow: 0 0 24px rgba(96, 165, 250, 0.4);
+    --shadow-glow-intense: 0 0 40px rgba(96, 165, 250, 0.6);
+    --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0 20px 25px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -34,60 +85,339 @@
   }
 }
 
-/* Smooth scrolling */
+/* ============================================================================
+   SMOOTH SCROLLING & BASE
+   ============================================================================ */
 html {
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Landing page gradient text */
+body {
+  @apply transition-colors duration-300;
+}
+
+/* ============================================================================
+   GLASSMORPHISM PREMIUM
+   ============================================================================ */
+
+/* Base glass card */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  backdrop-filter: blur(var(--glass-blur-intense));
+  -webkit-backdrop-filter: blur(var(--glass-blur-intense));
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Glass card intense (for modals, popovers) */
+.glass-intense {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur-intense)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-intense)) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+/* Glass with gradient border */
+.glass-gradient-border {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.glass-gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--gradient-primary);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.glass-gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* Frosted glass effect */
+.frosted-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dark .frosted-glass {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px) saturate(120%) brightness(0.9);
+  -webkit-backdrop-filter: blur(20px) saturate(120%) brightness(0.9);
+}
+
+/* ============================================================================
+   GRADIENTS & TEXT EFFECTS
+   ============================================================================ */
+
 .gradient-text {
-  background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #f97316 100%);
+  background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Glass card effect */
-.glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.gradient-text-accent {
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* CTA glow effect */
+.gradient-bg-primary {
+  background: var(--gradient-primary);
+}
+
+.gradient-bg-accent {
+  background: var(--gradient-accent);
+}
+
+/* Animated gradient background */
+.gradient-animated {
+  background: linear-gradient(
+    135deg,
+    #0ea5e9 0%,
+    #3b82f6 25%,
+    #8b5cf6 50%,
+    #3b82f6 75%,
+    #0ea5e9 100%
+  );
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ============================================================================
+   GLOW EFFECTS
+   ============================================================================ */
+
+.glow {
+  box-shadow: var(--shadow-glow);
+  transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glow:hover {
+  box-shadow: var(--shadow-glow-intense);
+}
+
+.glow-primary {
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.3);
+}
+
+.dark .glow-primary {
+  box-shadow: 0 0 32px rgba(96, 165, 250, 0.5);
+}
+
+.glow-accent {
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.3);
+}
+
+.glow-success {
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.3);
+}
+
+/* Button with animated glow */
 .btn-glow {
   position: relative;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-glow::before {
   content: "";
   position: absolute;
   inset: -2px;
-  background: linear-gradient(135deg, #0ea5e9, #8b5cf6, #f97316);
+  background: var(--gradient-primary);
   border-radius: inherit;
   z-index: -1;
   opacity: 0;
   transition: opacity 0.3s ease;
+  filter: blur(4px);
 }
 
 .btn-glow:hover::before {
   opacity: 1;
 }
 
-/* Section fade-in on scroll */
+.btn-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* ============================================================================
+   SHIMMER & LOADING EFFECTS
+   ============================================================================ */
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.dark .shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Skeleton loading with shimmer */
+.skeleton {
+  @apply bg-muted relative overflow-hidden rounded;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ============================================================================
+   BORDERS & DIVIDERS
+   ============================================================================ */
+
+.border-gradient {
+  border: 1px solid transparent;
+  background-image: linear-gradient(var(--background), var(--background)),
+    var(--gradient-primary);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+.divider-gradient {
+  height: 1px;
+  background: var(--gradient-primary);
+  opacity: 0.3;
+}
+
+/* ============================================================================
+   HOVER & INTERACTION STATES
+   ============================================================================ */
+
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.hover-scale {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* ============================================================================
+   SCROLL ANIMATIONS
+   ============================================================================ */
+
 .section-animate {
   opacity: 0;
-  transform: translateY(24px);
+  transform: translateY(32px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .section-animate.visible {
-  animation: fadeUp 0.6s ease-out forwards;
+  opacity: 1;
+  transform: translateY(0);
 }
 
-@keyframes fadeUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ============================================================================
+   CUSTOM SCROLLBAR (Premium look)
+   ============================================================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
