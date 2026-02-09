@@ -40,6 +40,12 @@ export default function DashboardLayout({
               Executions
             </a>
             <a
+              href="/dashboard/batches"
+              className="block rounded-md px-3 py-2 text-sm hover:bg-accent"
+            >
+              Batches
+            </a>
+            <a
               href="/dashboard/usage"
               className="block rounded-md px-3 py-2 text-sm hover:bg-accent"
             >
