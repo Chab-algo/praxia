@@ -5,10 +5,12 @@ import { useAuth } from "@clerk/nextjs";
 import { listExecutions } from "@/lib/api";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { expandCollapse, fadeUp, staggerContainer } from "@/lib/motion";
+import { ResultRenderer } from "@/components/result-renderer/ResultRenderer";
 
 interface Execution {
   id: string;
   agent_id: string;
+  recipe_slug: string | null;
   status: string;
   total_cost_cents: number;
   cache_hits: number;
@@ -142,12 +144,13 @@ export default function ExecutionsPage() {
 
                     {exec.output_data && (
                       <div>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-muted-foreground mb-2 block">
                           Output
                         </span>
-                        <pre className="mt-1 rounded-md bg-muted p-3 text-xs font-mono whitespace-pre-wrap">
-                          {JSON.stringify(exec.output_data, null, 2)}
-                        </pre>
+                        <ResultRenderer
+                          outputData={exec.output_data}
+                          recipeSlug={exec.recipe_slug}
+                        />
                       </div>
                     )}
 

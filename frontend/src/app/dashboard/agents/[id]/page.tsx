@@ -6,6 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { getRecipe, createExecution } from "@/lib/api";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
+import { ResultRenderer } from "@/components/result-renderer/ResultRenderer";
 
 interface AgentData {
   id: string;
@@ -278,10 +279,11 @@ export default function AgentDetailPage() {
               </div>
             </div>
 
-            <div className="rounded-md bg-muted p-4 mb-4">
-              <pre className="text-sm whitespace-pre-wrap font-mono">
-                {JSON.stringify(result.output_data, null, 2)}
-              </pre>
+            <div className="rounded-md bg-muted/30 p-4 mb-4">
+              <ResultRenderer
+                outputData={result.output_data}
+                recipeSlug={agent.recipe_slug}
+              />
             </div>
 
             {result.steps && result.steps.length > 0 && (
