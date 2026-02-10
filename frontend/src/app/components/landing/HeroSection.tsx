@@ -3,6 +3,8 @@
 import { useRef, useEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import { ArrowRight } from 'lucide-react';
+import Image from 'next/image';
+import { motion, useInView } from 'framer-motion';
 import { DiagonalPattern } from '@/components/landing/diagonal-pattern';
 import { MetricCounter } from '@/components/landing/metric-counter';
 import { Button } from '@/components/ui/button';
@@ -11,6 +13,8 @@ import { setupHeroParallax, setupMagneticButton } from '@/lib/gsap-animations';
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const ctaButtonRef = useRef<HTMLButtonElement>(null);
+  const imageRef = useRef(null);
+  const imageInView = useInView(imageRef, { once: true, margin: '-60px' });
 
   // Setup GSAP animations
   useGSAP(
@@ -86,11 +90,35 @@ export function HeroSection() {
         </div>
 
         {/* Metrics */}
-        <div className="metrics-container flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+        <div className="metrics-container flex flex-wrap items-center justify-center gap-8 sm:gap-12 mb-20">
           <MetricCounter value={48} suffix="h" label="Time to deploy" delay={200} />
           <MetricCounter value={5} label="Ready recipes" delay={400} />
           <MetricCounter value={20} suffix="+" label="Hours saved/week" delay={600} />
         </div>
+
+        {/* Hero Dashboard Screenshot */}
+        <motion.div
+          ref={imageRef}
+          initial={{ opacity: 0, y: 40, scale: 0.97 }}
+          animate={imageInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 40, scale: 0.97 }}
+          transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
+          className="relative mx-auto max-w-5xl"
+        >
+          {/* Glow effect behind image */}
+          <div className="absolute -inset-4 rounded-2xl bg-praxia-accent/10 blur-3xl" />
+
+          {/* Image container with border/shadow */}
+          <div className="relative rounded-xl overflow-hidden border border-border shadow-2xl ring-1 ring-white/5">
+            <Image
+              src="/hero-dashboard.jpg"
+              alt="PraxIA dashboard — create AI agents from recipes"
+              width={1280}
+              height={800}
+              className="w-full h-auto object-cover"
+              priority
+            />
+          </div>
+        </motion.div>
       </div>
     </section>
   );
