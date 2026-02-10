@@ -270,7 +270,7 @@ export default function OnboardingPage() {
               type="text"
               value={agentName}
               onChange={(e) => setAgentName(e.target.value)}
-              className="w-full rounded-md border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-md border bg-background text-foreground px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground"
               placeholder="Ex: Mon Review Responder"
             />
             <p className="mt-2 text-xs text-muted-foreground">
@@ -324,7 +324,7 @@ export default function OnboardingPage() {
                       onChange={(e) =>
                         setTestInputs((p) => ({ ...p, [key]: e.target.value }))
                       }
-                      className="w-full rounded-md border px-3 py-2 text-sm"
+                      className="w-full rounded-md border bg-background text-foreground px-3 py-2 text-sm"
                     >
                       {field.enum.map((opt: string) => (
                         <option key={opt} value={opt}>
@@ -339,7 +339,7 @@ export default function OnboardingPage() {
                         setTestInputs((p) => ({ ...p, [key]: e.target.value }))
                       }
                       rows={3}
-                      className="w-full rounded-md border px-3 py-2 text-sm"
+                      className="w-full rounded-md border bg-background text-foreground px-3 py-2 text-sm placeholder:text-muted-foreground"
                       placeholder={field.description}
                     />
                   ) : (
@@ -349,7 +349,7 @@ export default function OnboardingPage() {
                       onChange={(e) =>
                         setTestInputs((p) => ({ ...p, [key]: e.target.value }))
                       }
-                      className="w-full rounded-md border px-3 py-2 text-sm"
+                      className="w-full rounded-md border bg-background text-foreground px-3 py-2 text-sm placeholder:text-muted-foreground"
                       placeholder={field.description}
                     />
                   )}
