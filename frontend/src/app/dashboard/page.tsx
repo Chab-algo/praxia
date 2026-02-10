@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import {
@@ -9,15 +9,10 @@ import {
   getBudgetStatus,
 } from "@/lib/api";
 import { CardSkeleton, ChartSkeleton, Skeleton } from "@/components/skeleton";
-import { motion, useReducedMotion } from "framer-motion";
-import {
-  fadeInUp,
-  fadeInScale,
-  staggerContainer,
-  staggerSlow,
-  cardHoverPremium,
-  premiumCard,
-} from "@/lib/motion-premium";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { Card } from "@/components/ui/card";
+import { useGSAP } from "@gsap/react";
+import { setupStatCardsReveal } from "@/lib/gsap-animations";
 import {
   BarChart,
   Bar,
@@ -29,12 +24,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import {
-  TrendingUp,
-  Zap,
-  Activity,
   Layers,
+  Activity,
+  Zap,
   DollarSign,
-  ArrowUpRight,
+  ArrowRight,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -52,10 +46,10 @@ interface TimelineDay {
   cost_cents: number;
 }
 
-export default function DashboardPagePremium() {
+export default function DashboardPage() {
   const router = useRouter();
   const { getToken, isLoaded } = useAuth();
-  const shouldReduceMotion = useReducedMotion();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [timeline, setTimeline] = useState<TimelineDay[]>([]);
@@ -98,6 +92,16 @@ export default function DashboardPagePremium() {
     load();
   }, [isLoaded, getToken, router]);
 
+  // Setup GSAP animations
+  useGSAP(
+    () => {
+      if (!loading) {
+        setupStatCardsReveal();
+      }
+    },
+    { scope: containerRef, dependencies: [loading] }
+  );
+
   if (loading) {
     return (
       <div>
@@ -123,7 +127,7 @@ export default function DashboardPagePremium() {
   }));
 
   const spentUsd = stats ? stats.budget_consumed_cents / 100 : 0;
-  const budgetPercent = (spentUsd / budgetUsd) * 100;
+  const budgetPercent = Math.min((spentUsd / budgetUsd) * 100, 100);
 
   const totalExecutions = timeline.reduce(
     (acc, day) => acc + day.executions,
@@ -131,230 +135,122 @@ export default function DashboardPagePremium() {
   );
   const successRate =
     totalExecutions > 0
-      ? Number((
-          (timeline.reduce((acc, day) => acc + day.successful, 0) /
-            totalExecutions) *
+      ? ((timeline.reduce((acc, day) => acc + day.successful, 0) /
+          totalExecutions) *
           100
-        ).toFixed(1))
-      : 0;
+        ).toFixed(1)
+      : "0";
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div ref={containerRef}>
       {/* Header */}
-      <motion.div
-        className="mb-8"
-        variants={fadeInUp}
-        initial={shouldReduceMotion ? false : "initial"}
-        animate={shouldReduceMotion ? false : "animate"}
-      >
-        <h2 className="text-3xl font-bold mb-2 gradient-text">Dashboard</h2>
-        <p className="text-sm text-muted-foreground">
+      <div className="mb-8">
+        <h2 className="text-h1 mb-2">Dashboard</h2>
+        <p className="text-body text-muted-foreground">
           Welcome back! Here's your AI agent activity overview.
         </p>
-      </motion.div>
+      </div>
 
       {/* Stats cards */}
-      <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-        variants={staggerContainer}
-        initial={shouldReduceMotion ? false : "initial"}
-        animate={shouldReduceMotion ? false : "animate"}
-      >
-        {/* Agent count card */}
-        <motion.a
+      <div className="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          label="Agents"
+          value={stats?.agent_count ?? 0}
+          icon={Layers}
           href="/dashboard/agents"
-          className="relative group glass-card rounded-xl p-6 overflow-hidden hover-lift"
-          variants={fadeInScale}
-          whileHover={shouldReduceMotion ? {} : cardHoverPremium.hover}
-          whileTap={shouldReduceMotion ? {} : cardHoverPremium.tap}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        >
-          {/* Background gradient glow */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        />
 
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Layers className="w-5 h-5 text-blue-500" />
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-1">Agents</p>
-            <p className="text-4xl font-bold">{stats?.agent_count ?? 0}</p>
-          </div>
-        </motion.a>
-
-        {/* Executions card */}
-        <motion.a
+        <StatCard
+          label="Executions (7d)"
+          value={stats?.recent_execution_count ?? 0}
+          icon={Activity}
           href="/dashboard/executions"
-          className="relative group glass-card rounded-xl p-6 overflow-hidden hover-lift"
-          variants={fadeInScale}
-          whileHover={shouldReduceMotion ? {} : cardHoverPremium.hover}
-          whileTap={shouldReduceMotion ? {} : cardHoverPremium.tap}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          trend={
+            successRate !== "0"
+              ? { value: `${successRate}% success`, positive: Number(successRate) > 80 }
+              : undefined
+          }
+        />
 
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <Activity className="w-5 h-5 text-green-500" />
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-1">
-              Executions (7d)
-            </p>
-            <p className="text-4xl font-bold">
-              {stats?.recent_execution_count ?? 0}
-            </p>
-            {successRate > 0 && (
-              <div className="flex items-center gap-1 mt-2">
-                <TrendingUp className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                  {successRate}% success rate
-                </span>
-              </div>
-            )}
-          </div>
-        </motion.a>
-
-        {/* Batches card */}
-        <motion.a
+        <StatCard
+          label="Batches"
+          value={stats?.batch_count ?? 0}
+          icon={Zap}
           href="/dashboard/batches"
-          className="relative group glass-card rounded-xl p-6 overflow-hidden hover-lift"
-          variants={fadeInScale}
-          whileHover={shouldReduceMotion ? {} : cardHoverPremium.hover}
-          whileTap={shouldReduceMotion ? {} : cardHoverPremium.tap}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        />
 
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-purple-500" />
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-1">Batches</p>
-            <p className="text-4xl font-bold">{stats?.batch_count ?? 0}</p>
-          </div>
-        </motion.a>
-
-        {/* AI Cost card */}
-        <motion.a
+        <StatCard
+          label="AI Cost"
+          value={`$${spentUsd.toFixed(4)}`}
+          icon={DollarSign}
           href="/dashboard/usage"
-          className="relative group glass-card rounded-xl p-6 overflow-hidden hover-lift"
-          variants={fadeInScale}
-          whileHover={shouldReduceMotion ? {} : cardHoverPremium.hover}
-          whileTap={shouldReduceMotion ? {} : cardHoverPremium.tap}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        />
+      </div>
 
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-amber-500" />
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-1">AI Cost</p>
-            <p className="text-4xl font-bold">${spentUsd.toFixed(4)}</p>
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-muted-foreground">
-                  {budgetPercent.toFixed(1)}% used
-                </span>
-                <span className="text-muted-foreground">
-                  ${budgetUsd.toFixed(2)}
-                </span>
-              </div>
-              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${budgetPercent}%` }}
-                  transition={{
-                    duration: 1,
-                    ease: [0.16, 1, 0.3, 1],
-                    delay: 0.5,
-                  }}
-                />
-              </div>
-            </div>
+      {/* Budget progress bar */}
+      {budgetPercent > 0 && (
+        <Card padding="md" className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Budget Usage</span>
+            <span className="text-sm font-mono text-muted-foreground">
+              ${spentUsd.toFixed(2)} / ${budgetUsd.toFixed(2)}
+            </span>
           </div>
-        </motion.a>
-      </motion.div>
+          <div className="w-full h-2 bg-praxia-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-praxia-accent transition-all duration-500"
+              style={{ width: `${budgetPercent}%` }}
+            />
+          </div>
+        </Card>
+      )}
 
       {/* Execution chart */}
-      <motion.div
-        className="glass-card rounded-xl p-6 mb-8"
-        variants={fadeInUp}
-        initial={shouldReduceMotion ? false : "initial"}
-        animate={shouldReduceMotion ? false : "animate"}
-      >
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-lg font-semibold">Execution Activity</h3>
-            <p className="text-sm text-muted-foreground">Last 7 days</p>
-          </div>
+      <Card padding="md" className="mb-8">
+        <div className="mb-6">
+          <h3 className="text-h4 mb-1">Execution Activity</h3>
+          <p className="text-sm text-muted-foreground">Last 7 days</p>
         </div>
 
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={chartData}>
-              <defs>
-                <linearGradient id="successGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.3} />
-                </linearGradient>
-                <linearGradient id="failGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.8} />
-                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0.3} />
-                </linearGradient>
-              </defs>
               <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
-                strokeOpacity={0.3}
+                strokeDasharray=""
+                stroke="rgb(var(--praxia-gray-200))"
+                strokeWidth={0.5}
               />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                stroke="hsl(var(--border))"
+                tick={{ fontSize: 12, fill: "rgb(var(--praxia-gray-600))" }}
+                stroke="rgb(var(--praxia-gray-400))"
               />
               <YAxis
                 allowDecimals={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                stroke="hsl(var(--border))"
+                tick={{ fontSize: 12, fill: "rgb(var(--praxia-gray-600))" }}
+                stroke="rgb(var(--praxia-gray-400))"
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "hsl(var(--background))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "12px",
+                  backgroundColor: "rgb(var(--praxia-white))",
+                  border: "1px solid rgb(var(--praxia-gray-200))",
+                  borderRadius: "6px",
                   fontSize: 12,
-                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05)",
                 }}
-                cursor={{ fill: "hsl(var(--muted))", opacity: 0.1 }}
+                cursor={{ fill: "rgb(var(--praxia-gray-50))" }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar
                 dataKey="successful"
-                fill="url(#successGradient)"
+                fill="rgb(var(--praxia-success))"
                 name="Successful"
                 stackId="a"
                 radius={[0, 0, 0, 0]}
               />
               <Bar
                 dataKey="failed"
-                fill="url(#failGradient)"
+                fill="rgb(var(--praxia-error))"
                 name="Failed"
                 stackId="a"
                 radius={[6, 6, 0, 0]}
@@ -362,83 +258,43 @@ export default function DashboardPagePremium() {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[320px]">
-            <div className="text-center">
-              <Activity className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">
-                No execution data yet
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Run an agent to see activity here
-              </p>
-            </div>
+          <div className="flex flex-col items-center justify-center h-[320px]">
+            <Activity className="w-12 h-12 text-muted-foreground/30 mb-3" />
+            <p className="text-sm text-muted-foreground">No execution data yet</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Run an agent to see activity here
+            </p>
           </div>
         )}
-      </motion.div>
+      </Card>
 
       {/* Quick actions */}
-      <motion.div
-        className="glass-card rounded-xl p-6"
-        variants={fadeInUp}
-        initial={shouldReduceMotion ? false : "initial"}
-        animate={shouldReduceMotion ? false : "animate"}
-      >
-        <h3 className="text-lg font-semibold mb-4">Quick Start</h3>
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-          variants={staggerSlow}
-          initial={shouldReduceMotion ? false : "initial"}
-          animate={shouldReduceMotion ? false : "animate"}
-        >
-          <motion.a
+      <Card padding="md">
+        <h3 className="text-h4 mb-4">Quick Start</h3>
+        <div className="space-y-2">
+          <a
             href="/dashboard/recipes"
-            className="relative group rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-500/5 p-5 border border-transparent hover:border-blue-500/30 transition-colors"
-            variants={fadeInScale}
-            whileHover={shouldReduceMotion ? {} : { scale: 1.02, y: -2 }}
-            whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+            className="flex items-center justify-between p-3 rounded-md border border-transparent hover:border-praxia-accent hover:bg-praxia-gray-50 transition-all group"
           >
-            <div className="font-medium mb-2 flex items-center gap-2">
-              <span>Browse Recipes</span>
-              <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Pick a pre-built AI agent template
-            </p>
-          </motion.a>
-
-          <motion.a
+            <span className="font-medium">Browse Recipes</span>
+            <ArrowRight className="w-4 h-4 text-praxia-accent group-hover:translate-x-1 transition-transform" />
+          </a>
+          <a
             href="/dashboard/agents"
-            className="relative group rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-500/5 p-5 border border-transparent hover:border-purple-500/30 transition-colors"
-            variants={fadeInScale}
-            whileHover={shouldReduceMotion ? {} : { scale: 1.02, y: -2 }}
-            whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+            className="flex items-center justify-between p-3 rounded-md border border-transparent hover:border-praxia-accent hover:bg-praxia-gray-50 transition-all group"
           >
-            <div className="font-medium mb-2 flex items-center gap-2">
-              <span>Manage Agents</span>
-              <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Configure and test your AI agents
-            </p>
-          </motion.a>
-
-          <motion.a
+            <span className="font-medium">Manage Agents</span>
+            <ArrowRight className="w-4 h-4 text-praxia-accent group-hover:translate-x-1 transition-transform" />
+          </a>
+          <a
             href="/dashboard/batches/new"
-            className="relative group rounded-lg bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-5 border border-transparent hover:border-amber-500/30 transition-colors"
-            variants={fadeInScale}
-            whileHover={shouldReduceMotion ? {} : { scale: 1.02, y: -2 }}
-            whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+            className="flex items-center justify-between p-3 rounded-md border border-transparent hover:border-praxia-accent hover:bg-praxia-gray-50 transition-all group"
           >
-            <div className="font-medium mb-2 flex items-center gap-2">
-              <span>New Batch</span>
-              <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Process items in bulk with CSV upload
-            </p>
-          </motion.a>
-        </motion.div>
-      </motion.div>
-    </motion.div>
+            <span className="font-medium">New Batch</span>
+            <ArrowRight className="w-4 h-4 text-praxia-accent group-hover:translate-x-1 transition-transform" />
+          </a>
+        </div>
+      </Card>
+    </div>
   );
 }

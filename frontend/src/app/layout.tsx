@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { PageTransition } from "@/components/page-transition";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+import { spaceGrotesk, jetbrainsMono } from "./fonts";
 
 export const metadata: Metadata = {
   title: "PraxIA - Custom AI Agents in 48 Hours",
@@ -29,9 +24,11 @@ export default function RootLayout({
 }) {
   const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
+  const fontClasses = `${spaceGrotesk.variable} ${jetbrainsMono.variable}`;
+
   if (!clerkKey) {
     return (
-      <html lang="en" className={inter.variable}>
+      <html lang="en" className={fontClasses}>
         <body className="min-h-screen antialiased font-sans">
           <PageTransition>{children}</PageTransition>
         </body>
@@ -41,7 +38,7 @@ export default function RootLayout({
 
   return (
     <ClerkProvider publishableKey={clerkKey}>
-      <html lang="en" className={inter.variable}>
+      <html lang="en" className={fontClasses}>
         <body className="min-h-screen antialiased font-sans">
           <PageTransition>{children}</PageTransition>
         </body>
