@@ -233,72 +233,16 @@ export function HeroSection() {
             }}
             className="relative"
           >
-            {/* Browser chrome + screenshot */}
+            {/* Screenshot — clean, no chrome, no badges, no fade */}
             <div className="overflow-hidden rounded-t-2xl border border-praxia-gray-200 border-b-0 shadow-[0_-16px_64px_-8px_rgba(217,119,6,0.18),0_-4px_24px_-4px_rgba(0,0,0,0.07)]">
-
-              {/* Chrome top bar */}
-              <div className="flex items-center gap-2 border-b border-praxia-gray-100 bg-[#f2f3f4] px-4 py-3">
-                <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-                <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
-                <span className="h-3 w-3 rounded-full bg-[#28c840]" />
-                <div className="mx-auto flex max-w-[280px] flex-1 items-center gap-1.5 rounded-md border border-praxia-gray-200/50 bg-white/80 px-3 py-1 shadow-inner">
-                  <svg className="h-3 w-3 shrink-0 text-praxia-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <span className="text-[11px] font-mono text-praxia-gray-400">app.praxia.ai/dashboard</span>
-                </div>
-              </div>
-
-              {/* Image */}
-              <div className="relative">
-                <Image
-                  src="/hero-dashboard.jpg"
-                  alt="PraxIA — tableau de bord"
-                  width={1400}
-                  height={900}
-                  className="block w-full h-auto"
-                  priority
-                />
-
-                {/* Fade bottom into next section */}
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/50 to-transparent" />
-
-                {/* Badge — left */}
-                <motion.div
-                  initial={{ opacity: 0, x: -18, y: 6 }}
-                  animate={imgInView ? { opacity: 1, x: 0, y: 0 } : {}}
-                  transition={{ delay: 0.9, duration: 0.55, type: 'spring', stiffness: 180, damping: 18 }}
-                  className="absolute left-6 top-6 flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-4 py-3 shadow-2xl shadow-black/10 backdrop-blur-xl"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-50">
-                    <svg className="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-praxia-black">Agent déployé</p>
-                    <p className="mt-0.5 text-[10px] text-praxia-gray-400">Review Responder · 2 min ago</p>
-                  </div>
-                </motion.div>
-
-                {/* Badge — right */}
-                <motion.div
-                  initial={{ opacity: 0, x: 18, y: 6 }}
-                  animate={imgInView ? { opacity: 1, x: 0, y: 0 } : {}}
-                  transition={{ delay: 1.1, duration: 0.55, type: 'spring', stiffness: 180, damping: 18 }}
-                  className="absolute right-6 top-6 flex items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-4 py-3 shadow-2xl shadow-black/10 backdrop-blur-xl"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50">
-                    <svg className="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-praxia-black">247 tâches automatisées</p>
-                    <p className="mt-0.5 text-[10px] text-praxia-gray-400">Cette semaine · $0.003 moy.</p>
-                  </div>
-                </motion.div>
-              </div>
+              <Image
+                src="/hero-dashboard.jpg"
+                alt="PraxIA — tableau de bord"
+                width={1400}
+                height={900}
+                className="block w-full h-auto"
+                priority
+              />
             </div>
           </motion.div>
         </motion.div>
