@@ -6,6 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { listRecipes, createAgent, createExecution } from "@/lib/api";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { fadeUp, staggerContainer, cardHover } from "@/lib/motion";
+import { ResultRenderer } from "@/components/result-renderer/ResultRenderer";
 
 interface Recipe {
   slug: string;
@@ -377,9 +378,12 @@ export default function OnboardingPage() {
               >
                 <h4 className="font-semibold text-green-700 mb-3">Resultat</h4>
                 {testResult.output_data && (
-                  <pre className="bg-muted p-4 rounded text-xs overflow-auto max-h-64 mb-4">
-                    {JSON.stringify(testResult.output_data, null, 2)}
-                  </pre>
+                  <div className="mb-4">
+                    <ResultRenderer
+                      outputData={testResult.output_data}
+                      recipeSlug={selectedRecipe?.slug}
+                    />
+                  </div>
                 )}
                 {testResult.steps && testResult.steps.length > 0 && (
                   <div>
