@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 import structlog
 from sqlalchemy import select
@@ -82,3 +83,9 @@ async def update_agent(
             setattr(agent, key, value)
     await db.flush()
     return agent
+
+
+async def delete_agent(db: AsyncSession, agent: Agent) -> None:
+    agent.deleted_at = datetime.now(timezone.utc)
+    await db.flush()
+    logger.info("agent_deleted", agent_id=str(agent.id))

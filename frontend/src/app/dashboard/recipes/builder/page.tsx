@@ -169,7 +169,7 @@ export default function RecipeBuilderPage() {
             <select
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:border-praxia-accent transition-colors"
             >
               {DOMAINS.map((d) => (
                 <option key={d.value} value={d.value}>
@@ -187,7 +187,7 @@ export default function RecipeBuilderPage() {
               value={requirement}
               onChange={(e) => setRequirement(e.target.value)}
               placeholder="Ex: Je veux un agent qui analyse les avis clients et génère des réponses personnalisées selon le sentiment..."
-              className="w-full p-3 border rounded-lg min-h-[150px]"
+              className="w-full p-3 border border-border rounded-lg min-h-[150px] bg-background text-foreground focus:outline-none focus:border-praxia-accent transition-colors"
               rows={6}
             />
             <p className="text-xs text-muted-foreground mt-1">

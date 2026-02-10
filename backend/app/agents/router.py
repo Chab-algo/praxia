@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents import service
@@ -115,3 +115,16 @@ async def update_agent(
         custom_prompts=agent.custom_prompts,
         created_at=agent.created_at,
     )
+
+
+@router.delete("/{agent_id}", status_code=204)
+async def delete_agent(
+    agent_id: uuid.UUID,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    agent = await service.get_agent(db, agent_id, user.id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    await service.delete_agent(db, agent)
+    return Response(status_code=204)

@@ -83,6 +83,29 @@ export async function createAgent(token: string, data: {
   });
 }
 
+export async function updateAgent(token: string, agentId: string, data: {
+  name?: string;
+  description?: string;
+  status?: string;
+}) {
+  return fetchAPI(`/api/agents/${agentId}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteAgent(token: string, agentId: string) {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const res = await fetch(`${API_URL}/api/agents/${agentId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok && res.status !== 204) {
+    throw new Error(`Failed to delete agent: ${res.status}`);
+  }
+}
+
 // Executions
 export async function createExecution(token: string, data: {
   agent_id: string;

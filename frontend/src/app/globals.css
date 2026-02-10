@@ -352,6 +352,26 @@ input:-webkit-autofill:focus {
 }
 
 /* ============================================================================
+   GLASS CARD & HOVER LIFT
+   ============================================================================ */
+
+@layer components {
+  .glass-card {
+    @apply bg-card border border-border rounded-xl;
+    @apply shadow-sm;
+  }
+}
+
+@layer utilities {
+  .hover-lift {
+    @apply transition-transform duration-200;
+  }
+  .hover-lift:hover {
+    @apply -translate-y-0.5;
+  }
+}
+
+/* ============================================================================
    BUTTON HOVER EFFECTS (Minimal)
    ============================================================================ */
 
