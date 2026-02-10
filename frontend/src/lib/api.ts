@@ -174,68 +174,6 @@ export async function getAnalyticsInsights(token: string) {
   });
 }
 
-// CRM
-export async function listLeads(token: string, status?: string) {
-  const url = status ? `/api/crm/leads?status=${status}` : "/api/crm/leads";
-  return fetchAPI(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export async function getLead(token: string, leadId: string) {
-  return fetchAPI(`/api/crm/leads/${leadId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export async function createLead(token: string, data: {
-  email: string;
-  full_name?: string;
-  company?: string;
-  phone?: string;
-  job_title?: string;
-  source?: string;
-  notes?: string;
-}) {
-  return fetchAPI("/api/crm/leads", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(data),
-  });
-}
-
-export async function updateLead(token: string, leadId: string, data: {
-  email?: string;
-  full_name?: string;
-  company?: string;
-  phone?: string;
-  job_title?: string;
-  status?: string;
-  source?: string;
-  score?: number;
-  notes?: string;
-  assigned_to?: string;
-}) {
-  return fetchAPI(`/api/crm/leads/${leadId}`, {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(data),
-  });
-}
-
-export async function addInteraction(token: string, leadId: string, data: {
-  type: string;
-  subject?: string;
-  notes?: string;
-  outcome?: string;
-}) {
-  return fetchAPI(`/api/crm/leads/${leadId}/interactions`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(data),
-  });
-}
-
 // Clients
 export async function getClientOverview(token: string, clientId: string) {
   return fetchAPI(`/api/clients/${clientId}/overview`, {

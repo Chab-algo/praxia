@@ -12,7 +12,6 @@ import {
   Layers,
   PieChart,
   BarChart3,
-  Users,
 } from "lucide-react";
 
 const NAV_LINKS = [
@@ -23,7 +22,6 @@ const NAV_LINKS = [
   { href: "/dashboard/batches", label: "Batches", icon: Layers },
   { href: "/dashboard/usage", label: "Usage", icon: PieChart },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/crm/leads", label: "CRM", icon: Users },
 ];
 
 function NavLinks({
