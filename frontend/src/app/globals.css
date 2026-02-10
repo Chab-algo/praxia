@@ -4,72 +4,71 @@
 
 @layer base {
   :root {
-    /* Premium Dark Theme - Praxia Brand */
-    --background: 0 0% 7%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 98%;
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 14%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 64%;
-    --accent: 262 83% 58%;
-    --accent-foreground: 0 0% 100%;
+    /* Ultra Premium Dark Theme - Minimal & Sophisticated */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 100%;
+    --accent-foreground: 0 0% 4%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 262 83% 58%;
-    --radius: 0.75rem;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 100%;
+    --radius: 0.5rem;
 
-    /* Premium Brand Colors */
-    --praxia-primary: 262 83% 58%; /* Electric Violet */
-    --praxia-accent: 45 93% 58%; /* Golden Yellow */
-    --praxia-dark: 0 0% 7%;
-    --praxia-dark-light: 0 0% 14%;
-    --praxia-border: 0 0% 24%;
+    /* Premium Brand Colors - Monochrome with subtle accent */
+    --praxia-primary: 0 0% 100%;
+    --praxia-accent: 0 0% 85%;
+    --praxia-dark: 0 0% 4%;
+    --praxia-dark-light: 0 0% 8%;
+    --praxia-border: 0 0% 20%;
 
     /* Premium Glass & Effects */
-    --glass-bg: rgba(18, 18, 18, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-bg: rgba(10, 10, 10, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
     --glass-blur: 16px;
     --glass-blur-intense: 24px;
 
-    /* Gradients - Unique to Praxia */
-    --gradient-primary: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
-    --gradient-accent: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
-    --gradient-mesh: radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
-                     radial-gradient(at 100% 0%, rgba(251, 191, 36, 0.1) 0px, transparent 50%),
-                     radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+    /* Minimal Gradients - No color, just depth */
+    --gradient-primary: linear-gradient(135deg, #ffffff 0%, #e5e5e5 100%);
+    --gradient-accent: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+    --gradient-mesh: radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.03) 0px, transparent 50%),
+                     radial-gradient(at 100% 100%, rgba(255, 255, 255, 0.02) 0px, transparent 50%);
 
-    /* Shadows */
-    --shadow-glow: 0 0 32px rgba(139, 92, 246, 0.25);
-    --shadow-glow-intense: 0 0 48px rgba(139, 92, 246, 0.4);
-    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
-    --shadow-card-hover: 0 12px 40px rgba(0, 0, 0, 0.6);
+    /* Shadows - Subtle and premium */
+    --shadow-glow: 0 0 40px rgba(255, 255, 255, 0.05);
+    --shadow-glow-intense: 0 0 60px rgba(255, 255, 255, 0.08);
+    --shadow-card: 0 2px 24px rgba(0, 0, 0, 0.6);
+    --shadow-card-hover: 0 8px 40px rgba(0, 0, 0, 0.8);
   }
 
   .dark {
-    /* Same as root since we're dark-first */
-    --background: 0 0% 7%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 98%;
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 14%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 64%;
-    --accent: 262 83% 58%;
-    --accent-foreground: 0 0% 100%;
+    /* Same as root - dark-first design */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 100%;
+    --accent-foreground: 0 0% 4%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 262 83% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 100%;
   }
 }
 

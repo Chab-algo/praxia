@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, DM_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { PageTransition } from "@/components/page-transition";
@@ -7,6 +7,12 @@ import { PageTransition } from "@/components/page-transition";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-dm-sans",
 });
 
 export const metadata: Metadata = {
@@ -31,7 +37,7 @@ export default function RootLayout({
 
   if (!clerkKey) {
     return (
-      <html lang="en" className={inter.variable}>
+      <html lang="en" className={`${inter.variable} ${dmSans.variable}`}>
         <body className="min-h-screen antialiased font-sans">
           <PageTransition>{children}</PageTransition>
         </body>
@@ -41,7 +47,7 @@ export default function RootLayout({
 
   return (
     <ClerkProvider publishableKey={clerkKey}>
-      <html lang="en" className={inter.variable}>
+      <html lang="en" className={`${inter.variable} ${dmSans.variable}`}>
         <body className="min-h-screen antialiased font-sans">
           <PageTransition>{children}</PageTransition>
         </body>
