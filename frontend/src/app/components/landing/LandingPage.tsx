@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { HeroSection } from './HeroSection';
-import { OutcomesSection } from './OutcomesSection';
-import { RecipesShowcase } from './RecipesShowcase';
+import { FeaturesSection } from './FeaturesSection';
 import { HowItWorks } from './HowItWorks';
 import { FinalCTA } from './FinalCTA';
 import { SmoothScrollProvider } from '@/components/smooth-scroll-provider';
@@ -13,8 +12,7 @@ import { useGSAP } from '@gsap/react';
 import { setupNavbarAutoHide } from '@/lib/gsap-animations';
 
 const NAV_LINKS = [
-  { href: '#outcomes', label: 'Outcomes' },
-  { href: '#recipes', label: 'Recipes' },
+  { href: '#features', label: 'Features' },
   { href: '#how-it-works', label: 'How it Works' },
 ];
 
@@ -26,7 +24,7 @@ function useScrollState() {
     function onScroll() {
       setScrolled(window.scrollY > 20);
 
-      const sections = ['outcomes', 'recipes', 'how-it-works', 'cta'];
+      const sections = ['features', 'how-it-works', 'cta'];
       let current = '';
       for (const id of sections) {
         const el = document.getElementById(id);
@@ -163,8 +161,7 @@ export function LandingPage() {
         <div className="h-16" />
 
         <HeroSection />
-        <OutcomesSection />
-        <RecipesShowcase />
+        <FeaturesSection />
         <HowItWorks />
         <FinalCTA />
 
