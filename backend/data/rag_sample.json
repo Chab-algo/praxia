@@ -1,0 +1,24 @@
+{
+  "documents": [
+    {
+      "content": "PraxIA est une plateforme d'agents IA qui permet de créer des workflows d'automatisation métier à partir de besoins décrits en langage naturel. On peut créer des recipes (recettes) qui enchaînent des étapes LLM, des transformations, et les déployer comme agents.",
+      "metadata": { "source": "praxia_intro", "type": "definition" }
+    },
+    {
+      "content": "Une recipe PraxIA contient un slug, un input_schema et un output_schema JSON Schema, et une liste de steps. Chaque step peut être de type llm_call ou transform. Les steps llm_call ont un system_prompt, user_prompt, et des paramètres comme max_tokens et temperature.",
+      "metadata": { "source": "recipes", "type": "technical" }
+    },
+    {
+      "content": "Le coût par exécution est estimé via estimated_cost_per_run dans la recipe. L'orchestrateur utilise le LLMClient OpenAI (gpt-4.1-nano, gpt-4.1-mini, gpt-4.1) avec suivi des tokens et du coût. Un budget OpenAI peut être configuré (openai_budget_limit).",
+      "metadata": { "source": "costs", "type": "technical" }
+    },
+    {
+      "content": "La recherche vectorielle RAG utilise pgvector dans Postgres : les documents sont embeddés avec OpenAI text-embedding-3-small (1536 dimensions), stockés dans la table rag_documents. Les requêtes sont embeddées puis on fait un similarity search (opérateur <=> cosine) pour récupérer les k chunks les plus pertinents.",
+      "metadata": { "source": "rag", "type": "technical" }
+    },
+    {
+      "content": "Pour la démo, on peut ingérer des documents via POST /rag/ingest avec un body { \"documents\": [ { \"content\": \"...\", \"metadata\": {} } ] }. Ensuite POST /rag/query avec { \"question\": \"...\", \"k\": 4 } renvoie la réponse du chatbot et les sources. GET /rag/data exporte la data vectorisée pour que le prof puisse challenger les résultats.",
+      "metadata": { "source": "api_rag", "type": "api" }
+    }
+  ]
+}

@@ -20,6 +20,10 @@ dependencies = [
     # OpenAI
     "openai>=1.57.0",
     "tiktoken>=0.8.0",
+    # RAG (recherche vectorielle) - minimal pour déploiement léger
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "pgvector>=0.3.0",
     # Auth (JWT verification done manually, pyjwt for production)
     "pyjwt[crypto]>=2.9.0",
     # HTTP client

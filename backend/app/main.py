@@ -71,6 +71,7 @@ def create_app() -> FastAPI:
     from app.usage.router import router as usage_router
     from app.workflows.router import router as workflows_router
     from app.batches.router import router as batches_router
+    from app.rag.router import router as rag_router
 
     app.include_router(auth_router)
     app.include_router(recipes_router)
@@ -83,6 +84,7 @@ def create_app() -> FastAPI:
     app.include_router(recommendations_router)
     app.include_router(workflows_router)
     app.include_router(batches_router)
+    app.include_router(rag_router)
 
     return app
 
