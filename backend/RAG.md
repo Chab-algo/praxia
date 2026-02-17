@@ -1,8 +1,9 @@
 # RAG – Recherche vectorielle (démo)
 
-## Stack (léger pour Railway)
+## Stack (compatible Railway sans pgvector)
 
-- **Postgres + pgvector** : pas de service en plus, extension dans la même DB.
+- **Postgres** : table `rag_documents` avec `embedding` en **JSONB** (liste de floats). Pas d’extension pgvector, donc ça tourne sur le Postgres Railway par défaut.
+- **Recherche** : similarité cosine en Python sur les embeddings (adapté à une petite base de docs pour la démo).
 - **LangChain** : `langchain-core` + `langchain-openai` (embeddings + ChatOpenAI).
 - **Embeddings** : OpenAI `text-embedding-3-small` (1536 dim).
 
@@ -34,5 +35,5 @@
 
 ## Railway
 
-- **Postgres** : si tu utilises le Postgres Railway, vérifier que l’extension **pgvector** est disponible (certains clusters l’ont déjà). Sinon, activer l’extension dans le dashboard ou utiliser un fournisseur qui la propose.
-- **Docker** : pas de changement de taille notable (3 deps : langchain-core, langchain-openai, pgvector). Image Postgres en local : `pgvector/pgvector:pg16` dans `docker-compose.yml`.
+- **Postgres** : aucun extension requise. La table utilise uniquement des types standard (UUID, text, jsonb).
+- **Docker** : 2 deps RAG (langchain-core, langchain-openai), build restant léger.

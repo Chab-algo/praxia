@@ -53,7 +53,7 @@ services:
     command: npm run dev
 
   postgres:
-    image: pgvector/pgvector:pg16
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: praxia
       POSTGRES_PASSWORD: praxia
