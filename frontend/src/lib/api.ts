@@ -229,3 +229,51 @@ export async function exportBatch(token: string, id: string, format: "csv" | "js
   if (!res.ok) throw new Error("Export failed");
   return res.text();
 }
+
+// RAG (Agent IA – recherche vectorielle + expert)
+export interface RagQueryOptions {
+  k?: number;
+  specialist?: string;
+  score_threshold?: number;
+  filter_metadata?: Record<string, string>;
+}
+
+export interface RagSource {
+  content: string;
+  metadata: Record<string, unknown>;
+  score?: number;
+}
+
+export interface RagQueryResponse {
+  answer: string;
+  sources: RagSource[];
+}
+
+export async function queryRag(
+  question: string,
+  options?: RagQueryOptions
+): Promise<RagQueryResponse> {
+  return fetchAPI("/rag/query", {
+    method: "POST",
+    body: JSON.stringify({
+      question,
+      k: options?.k ?? 6,
+      specialist: options?.specialist ?? "agents_ia",
+      score_threshold: options?.score_threshold ?? 0.65,
+      filter_metadata: options?.filter_metadata ?? undefined,
+    }),
+  });
+}
+
+export interface GetRagDataParams {
+  source?: string;
+  include_embeddings?: boolean;
+}
+
+export async function getRagData(params?: GetRagDataParams): Promise<{ documents: Array<Record<string, unknown>> }> {
+  const searchParams = new URLSearchParams();
+  if (params?.source) searchParams.set("source", params.source);
+  if (params?.include_embeddings !== undefined) searchParams.set("include_embeddings", String(params.include_embeddings));
+  const qs = searchParams.toString();
+  return fetchAPI(`/rag/data${qs ? `?${qs}` : ""}`);
+}

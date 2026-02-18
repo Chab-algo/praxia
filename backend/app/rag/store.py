@@ -76,16 +76,27 @@ async def add_documents(documents: list[tuple[str, dict]]) -> int:
     return count
 
 
-async def similarity_search(query_embedding: list[float], k: int = 4) -> list[dict[str, Any]]:
+async def similarity_search(
+    query_embedding: list[float],
+    k: int = 4,
+    filter_metadata: dict | None = None,
+) -> list[dict[str, Any]]:
     """
-    Recherche vectorielle: charge les docs, trie par similarité cosine, retourne les k plus proches.
-    (Compatible Railway sans extension pgvector.)
+    Recherche vectorielle : charge les docs (éventuellement filtrés par metadata), calcule la
+    similarité cosine, trie et retourne les k plus proches. Chaque hit contient content,
+    metadata, distance (cosine) et score (1 - distance) pour que le prof puisse challenger.
     """
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT content, metadata, embedding FROM rag_documents"
-        )
+        if filter_metadata:
+            rows = await conn.fetch(
+                "SELECT content, metadata, embedding FROM rag_documents WHERE metadata @> $1::jsonb",
+                asyncpg.types.JSONB(filter_metadata),
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT content, metadata, embedding FROM rag_documents"
+            )
     scored = [
         (
             _cosine_distance(query_embedding, list(r["embedding"])),
@@ -94,25 +105,59 @@ async def similarity_search(query_embedding: list[float], k: int = 4) -> list[di
         for r in rows
     ]
     scored.sort(key=lambda x: x[0])
-    return [{"content": s[1]["content"], "metadata": s[1]["metadata"], "distance": s[0]} for s in scored[:k]]
-
-
-async def list_documents() -> list[dict[str, Any]]:
-    """Liste les documents vectorisés (pour fournir la data au prof)."""
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT id, content, metadata, created_at FROM rag_documents ORDER BY created_at"
-        )
     return [
         {
+            "content": s[1]["content"],
+            "metadata": s[1]["metadata"],
+            "distance": s[0],
+            "score": 1.0 - s[0],
+        }
+        for s in scored[:k]
+    ]
+
+
+async def list_documents(
+    filter_metadata: dict | None = None,
+    include_embeddings: bool = False,
+) -> list[dict[str, Any]]:
+    """
+    Liste les documents vectorisés (export pour le prof). Optionnel : filtre par metadata,
+    inclusion des embeddings pour recalculer la similarité cosine côté client.
+    """
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        if filter_metadata:
+            if include_embeddings:
+                rows = await conn.fetch(
+                    "SELECT id, content, metadata, created_at, embedding FROM rag_documents WHERE metadata @> $1::jsonb ORDER BY created_at",
+                    asyncpg.types.JSONB(filter_metadata),
+                )
+            else:
+                rows = await conn.fetch(
+                    "SELECT id, content, metadata, created_at FROM rag_documents WHERE metadata @> $1::jsonb ORDER BY created_at",
+                    asyncpg.types.JSONB(filter_metadata),
+                )
+        else:
+            if include_embeddings:
+                rows = await conn.fetch(
+                    "SELECT id, content, metadata, created_at, embedding FROM rag_documents ORDER BY created_at"
+                )
+            else:
+                rows = await conn.fetch(
+                    "SELECT id, content, metadata, created_at FROM rag_documents ORDER BY created_at"
+                )
+    result = []
+    for r in rows:
+        doc = {
             "id": str(r["id"]),
             "content": r["content"],
             "metadata": dict(r["metadata"] or {}),
             "created_at": r["created_at"].isoformat() if r["created_at"] else None,
         }
-        for r in rows
-    ]
+        if include_embeddings and "embedding" in r:
+            doc["embedding"] = list(r["embedding"])
+        result.append(doc)
+    return result
 
 
 async def close_pool() -> None:

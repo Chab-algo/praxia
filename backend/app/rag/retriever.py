@@ -1,9 +1,9 @@
 """
-Retriever LangChain qui s'appuie sur le store pgvector (recherche vectorielle).
+Retriever LangChain qui s'appuie sur le store (recherche vectorielle).
 
-- Hérite de BaseRetriever pour pouvoir l'enchaîner avec un LLM dans une chain.
-- get_relevant_documents / aget_relevant_documents: prennent la question, font l'embedding,
-  puis appellent store.similarity_search.
+- Hérite de BaseRetriever pour s'enchaîner avec un LLM dans une chain.
+- _aget_relevant_documents : embed de la question, puis similarity_search avec filter_metadata,
+  puis filtrage par score_threshold ; retourne une liste de Document (content + metadata dont score).
 """
 
 from langchain_core.callbacks import AsyncCallbackManagerForRetrieverRun
@@ -17,9 +17,14 @@ from app.rag.store import similarity_search
 
 
 class PgVectorRetriever(BaseRetriever):
-    """Retriever qui interroge la table rag_documents (pgvector)."""
+    """
+    Retriever qui interroge la table rag_documents : embed de la requête, recherche
+    vectorielle (similarity_search), filtrage optionnel par score minimum.
+    """
 
     k: int = 4
+    score_threshold: float | None = None
+    filter_metadata: dict | None = None
     embeddings: OpenAIEmbeddings | None = None
 
     class Config:
@@ -34,7 +39,6 @@ class PgVectorRetriever(BaseRetriever):
             )
 
     def _get_relevant_documents(self, query: str) -> list[Document]:
-        # Sync: on utilise l'async dans un run_until_complete si besoin; l'API RAG sera async.
         raise NotImplementedError("Utiliser aget_relevant_documents (async)")
 
     async def _aget_relevant_documents(
@@ -45,8 +49,21 @@ class PgVectorRetriever(BaseRetriever):
         config: RunnableConfig | None = None,
     ) -> list[Document]:
         query_embedding = await self.embeddings.aembed_query(query)
-        hits = await similarity_search(query_embedding, k=self.k)
+        hits = await similarity_search(
+            query_embedding,
+            k=self.k,
+            filter_metadata=self.filter_metadata,
+        )
+        if self.score_threshold is not None:
+            hits = [h for h in hits if h.get("score", 0) >= self.score_threshold]
         return [
-            Document(page_content=h["content"], metadata={**h["metadata"], "distance": h["distance"]})
+            Document(
+                page_content=h["content"],
+                metadata={
+                    **h["metadata"],
+                    "distance": h["distance"],
+                    "score": h.get("score", 1.0 - h["distance"]),
+                },
+            )
             for h in hits
         ]

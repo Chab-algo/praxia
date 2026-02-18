@@ -23,6 +23,7 @@ dependencies = [
     # RAG (recherche vectorielle) - JSONB sans pgvector pour Railway
     "langchain-core>=0.3.0",
     "langchain-openai>=0.2.0",
+    "langchain-text-splitters>=0.3.0",
     # Auth (JWT verification done manually, pyjwt for production)
     "pyjwt[crypto]>=2.9.0",
     # HTTP client
