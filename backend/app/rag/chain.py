@@ -98,7 +98,7 @@ async def query_rag(
         score_threshold=score_threshold,
         filter_metadata=meta_filter,
     )
-    docs = await retriever.aget_relevant_documents(question)
+    docs = await retriever.ainvoke(question)
     sources = [
         {
             "content": d.page_content,
