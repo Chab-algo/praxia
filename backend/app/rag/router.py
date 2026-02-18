@@ -34,14 +34,18 @@ async def query(body: RagQuery):
     specialist (ex. agents_ia), score_threshold, filter_metadata.
     Réponse avec answer et sources (content, metadata, score) pour challenger.
     """
-    answer, sources = await query_rag(
-        question=body.question,
-        k=body.k,
-        specialist=body.specialist,
-        score_threshold=body.score_threshold,
-        filter_metadata=body.filter_metadata,
-    )
-    return RagQueryResponse(answer=answer, sources=sources)
+    try:
+        answer, sources = await query_rag(
+            question=body.question,
+            k=body.k,
+            specialist=body.specialist,
+            score_threshold=body.score_threshold,
+            filter_metadata=body.filter_metadata,
+        )
+        return RagQueryResponse(answer=answer, sources=sources)
+    except Exception as e:
+        logger.exception("rag_query_error", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Erreur RAG: {str(e)}")
 
 
 @router.get("/data", response_model=DataExport)

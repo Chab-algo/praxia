@@ -35,11 +35,14 @@ def create_app() -> FastAPI:
     ]
     # Remove empty strings and duplicates
     origins = list(set(o for o in origins if o))
-    logger.info("cors_origins", origins=origins)
+    # Autoriser toutes les origines Railway (*.up.railway.app) pour éviter CORS en prod
+    allow_origin_regex = r"https://[a-z0-9-]+\.up\.railway\.app"
+    logger.info("cors_origins", origins=origins, allow_origin_regex=allow_origin_regex)
 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
+        allow_origin_regex=allow_origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
