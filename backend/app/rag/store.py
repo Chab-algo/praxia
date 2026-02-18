@@ -5,6 +5,7 @@ Store RAG: embeddings OpenAI + stockage JSONB (sans pgvector, compatible Railway
 - similarity_search: récupère les k chunks les plus proches (cosine en Python).
 """
 
+import json
 import uuid
 from typing import Any
 
@@ -91,7 +92,7 @@ async def similarity_search(
         if filter_metadata:
             rows = await conn.fetch(
                 "SELECT content, metadata, embedding FROM rag_documents WHERE metadata @> $1::jsonb",
-                filter_metadata,
+                json.dumps(filter_metadata),
             )
         else:
             rows = await conn.fetch(
@@ -127,15 +128,16 @@ async def list_documents(
     pool = await get_pool()
     async with pool.acquire() as conn:
         if filter_metadata:
+            json_filter = json.dumps(filter_metadata)
             if include_embeddings:
                 rows = await conn.fetch(
                     "SELECT id, content, metadata, created_at, embedding FROM rag_documents WHERE metadata @> $1::jsonb ORDER BY created_at",
-                    filter_metadata,
+                    json_filter,
                 )
             else:
                 rows = await conn.fetch(
                     "SELECT id, content, metadata, created_at FROM rag_documents WHERE metadata @> $1::jsonb ORDER BY created_at",
-                    filter_metadata,
+                    json_filter,
                 )
         else:
             if include_embeddings:
