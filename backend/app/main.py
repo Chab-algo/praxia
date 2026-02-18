@@ -31,6 +31,7 @@ def create_app() -> FastAPI:
     origins = [
         settings.frontend_url,
         "http://localhost:3000",
+        *[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
     ]
     # Remove empty strings and duplicates
     origins = list(set(o for o in origins if o))

@@ -9,7 +9,10 @@ Assurez-vous que les variables suivantes sont configurées dans Railway pour le 
 - `DATABASE_URL` - URL de connexion PostgreSQL
 - `REDIS_URL` - URL de connexion Redis
 - `CLERK_SECRET_KEY` - Clé secrète Clerk (pour l'authentification backend)
-- `FRONTEND_URL` - URL du frontend pour CORS (ex: `https://votre-frontend.up.railway.app`). Sans cela, l'onglet **Agent IA** et les appels API depuis le frontend échouent avec "Load failed".
+- **CORS** (au moins une des deux) :
+  - `FRONTEND_URL` - URL du frontend (ex: `https://votre-frontend.up.railway.app`)
+  - `CORS_ORIGINS` - Liste d’origines séparées par des virgules (ex: `https://votre-frontend.up.railway.app,http://localhost:3000`)
+  - Sans aucune des deux en prod, l’onglet **Agent IA** et les appels API échouent (Load failed / CORS).
 
 ### Frontend
 

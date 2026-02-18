@@ -24,8 +24,9 @@ class Settings(BaseSettings):
     backend_host: str = "0.0.0.0"
     log_level: str = "INFO"
 
-    # CORS
+    # CORS (frontend_url = une origine ; cors_origins = liste optionnelle séparée par des virgules)
     frontend_url: str = "http://localhost:3000"
+    cors_origins: str = ""
 
 
 settings = Settings()
