@@ -30,7 +30,13 @@ export default function AgentIAPage() {
       setAnswer(res.answer);
       setSources(res.sources || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de la requête");
+      const msg = err instanceof Error ? err.message : "Erreur lors de la requête";
+      const isNetworkError = /failed to fetch|load failed|network error|err_connection_refused/i.test(msg);
+      setError(
+        isNetworkError
+          ? "Impossible de joindre le backend. Vérifiez que NEXT_PUBLIC_API_URL pointe vers l'API (ex. https://votre-backend.up.railway.app) et que le backend autorise votre domaine (CORS)."
+          : msg
+      );
     } finally {
       setLoading(false);
     }
@@ -38,6 +44,7 @@ export default function AgentIAPage() {
 
   const handleDownloadData = async () => {
     setDownloading(true);
+    setError(null);
     try {
       const data = await getRagData({ include_embeddings: false });
       const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -50,7 +57,13 @@ export default function AgentIAPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error(err);
+      const msg = err instanceof Error ? err.message : "Erreur";
+      const isNetworkError = /failed to fetch|load failed|network error/i.test(msg);
+      setError(
+        isNetworkError
+          ? "Impossible de joindre le backend. Vérifiez NEXT_PUBLIC_API_URL et CORS."
+          : msg
+      );
     } finally {
       setDownloading(false);
     }
