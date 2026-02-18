@@ -68,8 +68,8 @@ async def add_documents(documents: list[tuple[str, dict]]) -> int:
                 """,
                 uuid.uuid4(),
                 content,
-                asyncpg.types.JSONB(meta),
-                asyncpg.types.JSONB(embedding),
+                meta,
+                embedding,
             )
             count += 1
     logger.info("rag_ingest", count=count)
@@ -91,7 +91,7 @@ async def similarity_search(
         if filter_metadata:
             rows = await conn.fetch(
                 "SELECT content, metadata, embedding FROM rag_documents WHERE metadata @> $1::jsonb",
-                asyncpg.types.JSONB(filter_metadata),
+                filter_metadata,
             )
         else:
             rows = await conn.fetch(
@@ -130,12 +130,12 @@ async def list_documents(
             if include_embeddings:
                 rows = await conn.fetch(
                     "SELECT id, content, metadata, created_at, embedding FROM rag_documents WHERE metadata @> $1::jsonb ORDER BY created_at",
-                    asyncpg.types.JSONB(filter_metadata),
+                    filter_metadata,
                 )
             else:
                 rows = await conn.fetch(
                     "SELECT id, content, metadata, created_at FROM rag_documents WHERE metadata @> $1::jsonb ORDER BY created_at",
-                    asyncpg.types.JSONB(filter_metadata),
+                    filter_metadata,
                 )
         else:
             if include_embeddings:
